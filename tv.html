@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Slayt Panosu</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
+        
+        #slide-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            position: absolute;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        #note-banner {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 20px;
+            font-size: 28px;
+            text-align: center;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="slide-container"></div>
+    <div id="note-banner" style="display: none;"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
+          authDomain: "deneme-fe19a.firebaseapp.com",
+          databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
+          projectId: "deneme-fe19a",
+          storageBucket: "deneme-fe19a.firebasestorage.app",
+          messagingSenderId: "147368854630",
+          appId: "1:147368854630:web:7a939c24884783fbdb19a7"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let currentImages = [];
+        let currentIndex = 0;
+        let slideInterval = null;
+
+        db.ref('displayData').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            const noteBanner = document.getElementById('note-banner');
+            if (data.note && data.note.trim() !== "") {
+                noteBanner.innerText = data.note;
+                noteBanner.style.display = 'block';
+            } else {
+                noteBanner.style.display = 'none';
+            }
+
+            if (data.images && data.images.length > 0) {
+                currentImages = data.images;
+                currentIndex = 0;
+                slaytiBaslat();
+            }
+        });
+
+        function slaytiBaslat() {
+            const container = document.getElementById('slide-container');
+            container.innerHTML = '';
+
+            currentImages.forEach((url, index) => {
+                const div = document.createElement('div');
+                div.className = 'slide' + (index === 0 ? ' active' : '');
+                div.style.backgroundImage = 'url("' + url + '")';
+                container.appendChild(div);
+            });
+
+            if (slideInterval) clearInterval(slideInterval);
+
+            if (currentImages.length > 1) {
+                slideInterval = setInterval(sonrakiSlayt, 5000);
+            }
+        }
+
+        function sonrakiSlayt() {
+            const slides = document.querySelectorAll('.slide');
+            if (slides.length === 0) return;
+
+            slides[currentIndex].classList.remove('active');
+            currentIndex = (currentIndex + 1) % slides.length;
+            slides[currentIndex].classList.add('active');
+        }
+    </script>
+</body>
+</html>

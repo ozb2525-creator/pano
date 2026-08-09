@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Uzaktan Pano Yönetimi</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 30px auto; padding: 20px; background: #f4f4f9; }
+        h2 { color: #333; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        input, textarea, button { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; }
+        textarea { height: 80px; }
+        button { background: #28a745; color: white; border: none; font-size: 16px; cursor: pointer; margin-top: 20px; border-radius: 4px; }
+        button:hover { background: #218838; }
+    </style>
+</head>
+<body>
+
+    <h2>Pano Yönetim Paneli</h2>
+    
+    <label>Duyuru / Not Metni:</label>
+    <textarea id="noteInput" placeholder="Ekranda görünecek notu yazýn..."></textarea>
+
+    <label>Slayt Resim Linkleri (Her satýra 1 resim URL'si):</label>
+    <textarea id="imagesInput" placeholder="https://resim-linki.com/1.jpg&#10;https://resim-linki.com/2.jpg"></textarea>
+
+    <button onclick="verileriGonder()">Ekrana Yansýt</button>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        var sifre = prompt("Lütfen panel þifresini girin:");
+        if (sifre !== "2525") {
+            alert("Hatalý þifre!");
+            document.body.innerHTML = "<h2 style='color:red; text-align:center; margin-top:50px;'>Eriþim Engellendi!</h2>";
+        }
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
+          authDomain: "deneme-fe19a.firebaseapp.com",
+          databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
+          projectId: "deneme-fe19a",
+          storageBucket: "deneme-fe19a.firebasestorage.app",
+          messagingSenderId: "147368854630",
+          appId: "1:147368854630:web:7a939c24884783fbdb19a7"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function verileriGonder() {
+            const note = document.getElementById('noteInput').value;
+            const rawImages = document.getElementById('imagesInput').value;
+            const imageList = rawImages.split('\n').filter(url => url.trim() !== '');
+
+            db.ref('displayData').set({
+                note: note,
+                images: imageList,
+                lastUpdated: Date.now()
+            }).then(() => {
+                alert('Ekran baþarýyla güncellendi!');
+            }).catch(err => {
+                alert('Hata oluþtu: ' + err.message);
+            });
+        }
+    </script>
+</body>
+</html>
