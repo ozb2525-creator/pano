@@ -2,115 +2,168 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Slayt Panosu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pano Slayt Ekranı</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: sans-serif; }
-        
-        #slide-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-
-        .slide {
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            position: absolute;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-        }
-
-        .slide.active {
-            opacity: 1;
-        }
-
-        #note-banner {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.75);
+        body {
+            background-color: #000;
             color: #fff;
-            padding: 20px;
-            font-size: 28px;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #loginBox {
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
             text-align: center;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
-            z-index: 10;
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        }
+        input[type="password"] {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #222;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 15px;
+            width: 80%;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        #mainContent {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #noteDisplay {
+            font-size: 2.8rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            text-align: center;
+            padding: 0 30px;
+            color: #ffffff;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+            word-wrap: break-word;
+        }
+        #imageDisplay {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 12px;
+            object-fit: contain;
+            display: none;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
         }
     </style>
 </head>
 <body>
 
-    <div id="slide-container"></div>
-    <div id="note-banner" style="display: none;"></div>
+    <!-- Şifre Giriş Kutusu -->
+    <div id="loginBox">
+        <h2>Pano Ekranı Girişi</h2>
+        <input type="password" id="pinInput" placeholder="PIN Şifrenizi Girin">
+        <br>
+        <button onclick="girisYap()">Giriş Yap</button>
+        <p id="errorMsg" style="color: #ff5252; margin-top: 10px; display: none;">Hatalı Şifre!</p>
+    </div>
+
+    <!-- Pano İçeriği -->
+    <div id="mainContent">
+        <div id="noteDisplay">Pano Hazır...</div>
+        <img id="imageDisplay" src="" alt="Resim">
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
+        // BELİRLEDİĞİNİZ ŞİFRE (Buradan değiştirebilirsiniz)
+        const KORUMA_SIFRESI = "1234";
+
         const firebaseConfig = {
           apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
           authDomain: "deneme-fe19a.firebaseapp.com",
           databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
-          projectId: "deneme-fe19a",
-          storageBucket: "deneme-fe19a.firebasestorage.app",
-          messagingSenderId: "147368854630",
-          appId: "1:147368854630:web:7a939c24884783fbdb19a7"
+          projectId: "deneme-fe19a"
         };
-
+        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let currentImages = [];
+        let imageList = [];
         let currentIndex = 0;
         let slideInterval = null;
 
-        db.ref('displayData').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-
-            const noteBanner = document.getElementById('note-banner');
-            if (data.note && data.note.trim() !== "") {
-                noteBanner.innerText = data.note;
-                noteBanner.style.display = 'block';
+        function girisYap() {
+            const girilen = document.getElementById('pinInput').value;
+            if (girilen === KORUMA_SIFRESI) {
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'flex';
+                panoyuBaslat();
             } else {
-                noteBanner.style.display = 'none';
-            }
-
-            if (data.images && data.images.length > 0) {
-                currentImages = data.images;
-                currentIndex = 0;
-                slaytiBaslat();
-            }
-        });
-
-        function slaytiBaslat() {
-            const container = document.getElementById('slide-container');
-            container.innerHTML = '';
-
-            currentImages.forEach((url, index) => {
-                const div = document.createElement('div');
-                div.className = 'slide' + (index === 0 ? ' active' : '');
-                div.style.backgroundImage = 'url("' + url + '")';
-                container.appendChild(div);
-            });
-
-            if (slideInterval) clearInterval(slideInterval);
-
-            if (currentImages.length > 1) {
-                slideInterval = setInterval(sonrakiSlayt, 5000);
+                document.getElementById('errorMsg').style.display = 'block';
             }
         }
 
-        function sonrakiSlayt() {
-            const slides = document.querySelectorAll('.slide');
-            if (slides.length === 0) return;
+        function panoyuBaslat() {
+            db.ref('displayData').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const noteElem = document.getElementById('noteDisplay');
+                    
+                    if (data.note) {
+                        noteElem.innerText = data.note;
+                        noteElem.style.display = 'block';
+                    } else {
+                        noteElem.style.display = 'none';
+                    }
 
-            slides[currentIndex].classList.remove('active');
-            currentIndex = (currentIndex + 1) % slides.length;
-            slides[currentIndex].classList.add('active');
+                    if (data.images && data.images.length > 0) {
+                        imageList = data.images;
+                        currentIndex = 0;
+                        baslatSlayt();
+                    } else {
+                        imageList = [];
+                        if (slideInterval) clearInterval(slideInterval);
+                        document.getElementById('imageDisplay').style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        function baslatSlayt() {
+            if (slideInterval) clearInterval(slideInterval);
+            const imgElem = document.getElementById('imageDisplay');
+            
+            function gosterNextResim() {
+                if (imageList.length === 0) return;
+                imgElem.src = imageList[currentIndex];
+                imgElem.style.display = 'block';
+                currentIndex = (currentIndex + 1) % imageList.length;
+            }
+
+            gosterNextResim();
+
+            if (imageList.length > 1) {
+                slideInterval = setInterval(gosterNextResim, 4000);
+            }
         }
     </script>
 </body>
