@@ -111,16 +111,27 @@
         let currentIndex = 0;
         let slideInterval = null;
 
-        function girisYap() {
-            const girilen = document.getElementById('pinInput').value;
-            if (girilen === KORUMA_SIFRESI) {
-                document.getElementById('loginBox').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'flex';
-                panoyuBaslat();
-            } else {
-                document.getElementById('errorMsg').style.display = 'block';
-            }
+       function girisYap() {
+    const girilen = document.getElementById('pinInput').value;
+    if (girilen === KORUMA_SIFRESI) {
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'flex';
+        
+        // Tarayıcıyı Otomatik Tam Ekran Yapma Kodu
+        var elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
         }
+
+        panoyuBaslat();
+    } else {
+        document.getElementById('errorMsg').style.display = 'block';
+    }
+}
 
         function panoyuBaslat() {
             db.ref('displayData').on('value', (snapshot) => {
