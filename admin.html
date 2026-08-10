@@ -2,65 +2,117 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Uzaktan Pano Y�netimi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pano Kontrol</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 30px auto; padding: 20px; background: #f4f4f9; }
-        h2 { color: #333; }
-        label { display: block; margin-top: 15px; font-weight: bold; }
-        input, textarea, button { width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box; }
-        textarea { height: 80px; }
-        button { background: #28a745; color: white; border: none; font-size: 16px; cursor: pointer; margin-top: 20px; border-radius: 4px; }
-        button:hover { background: #218838; }
+        body { font-family: sans-serif; background: #121212; color: #fff; padding: 20px; text-align: center; }
+        h2 { color: #4CAF50; margin-bottom: 20px; }
+        label { display: block; text-align: left; margin-top: 15px; font-size: 14px; color: #aaa; }
+        textarea, input, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 16px; }
+        textarea { height: 80px; background: #222; color: #fff; border: 1px solid #333; }
+        input[type="file"], input[type="password"] { background: #222; color: #fff; padding: 10px; }
+        button { background: #4CAF50; color: #fff; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        button:active { background: #388E3C; }
+        #status { margin-top: 15px; color: #ffeb3b; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2>Pano Y�netim Paneli</h2>
+    <h2>Pano Yönetim Paneli</h2>
     
-    <label>Duyuru / Not Metni:</label>
-    <textarea id="noteInput" placeholder="Ekranda g�r�necek notu yaz�n..."></textarea>
+    <label>Ekrana Yazılacak Not / Yazı:</label>
+    <textarea id="noteInput" placeholder="Yazınızı buraya girin..."></textarea>
+    
+    <label>Galeriden Çoklu Fotoğraf Seç:</label>
+    <input type="file" id="imageInput" accept="image/*" multiple>
 
-    <label>Slayt Resim Linkleri (Her sat�ra 1 resim URL'si):</label>
-    <textarea id="imagesInput" placeholder="https://resim-linki.com/1.jpg&#10;https://resim-linki.com/2.jpg"></textarea>
+    <label>Erişim Şifreniz:</label>
+    <input type="password" id="passInput" placeholder="Şifrenizi girin">
 
-    <button onclick="verileriGonder()">Ekrana Yans�t</button>
+    <button onclick="verileriGonder()">Slaytı Ekrana Yansıt</button>
+    <div id="status"></div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        var sifre = prompt("L�tfen panel �ifresini girin:");
-        if (sifre !== "2525") {
-            alert("Hatal� �ifre!");
-            document.body.innerHTML = "<h2 style='color:red; text-align:center; margin-top:50px;'>Eri�im Engellendi!</h2>";
-        }
+        // YÖNETİM ŞİFRE KONTROLÜ
+        const KORUMA_SIFRESI = "2525";
 
         const firebaseConfig = {
           apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
           authDomain: "deneme-fe19a.firebaseapp.com",
           databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
-          projectId: "deneme-fe19a",
-          storageBucket: "deneme-fe19a.firebasestorage.app",
-          messagingSenderId: "147368854630",
-          appId: "1:147368854630:web:7a939c24884783fbdb19a7"
+          projectId: "deneme-fe19a"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        function verileriGonder() {
+        function resmiSikistir(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function (event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function () {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const max_size = 800;
+                        if (width > height) {
+                            if (width > max_size) { height *= max_size / width; width = max_size; }
+                        } else {
+                            if (height > max_size) { width *= max_size / height; height = max_size; }
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
+                    }
+                }
+            });
+        }
+
+        async function verileriGonder() {
+            const status = document.getElementById('status');
+            const userPass = document.getElementById('passInput').value;
+
+            if (userPass !== KORUMA_SIFRESI) {
+                status.innerText = "Hata: Yanlış Şifre!";
+                status.style.color = "#ff5252";
+                return;
+            }
+
+            status.style.color = "#ffeb3b";
             const note = document.getElementById('noteInput').value;
-            const rawImages = document.getElementById('imagesInput').value;
-            const imageList = rawImages.split('\n').filter(url => url.trim() !== '');
+            const fileInput = document.getElementById('imageInput');
+            const files = fileInput.files;
+
+            status.innerText = "Fotoğraflar işleniyor...";
+
+            let imageArray = [];
+
+            if (files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    status.innerText = `Fotoğraf ${i + 1} / ${files.length} işleniyor...`;
+                    const compressedBase64 = await resmiSikistir(files[i]);
+                    imageArray.push(compressedBase64);
+                }
+            }
+
+            status.innerText = "Ekrana gönderiliyor...";
 
             db.ref('displayData').set({
                 note: note,
-                images: imageList,
+                images: imageArray,
                 lastUpdated: Date.now()
             }).then(() => {
-                alert('Ekran ba�ar�yla g�ncellendi!');
+                status.innerText = "Başarıyla Yansıtıldı!";
+                setTimeout(() => status.innerText = "", 3000);
             }).catch(err => {
-                alert('Hata olu�tu: ' + err.message);
+                status.innerText = "Hata: " + err.message;
             });
         }
     </script>
