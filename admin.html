@@ -59,7 +59,10 @@
                         const canvas = document.createElement('canvas');
                         let width = img.width;
                         let height = img.height;
-                        const max_size = 800;
+                        
+                        // HD KALİTE AYARI: Maksimum 1920px genişlik/yükseklik
+                        const max_size = 1920; 
+                        
                         if (width > height) {
                             if (width > max_size) { height *= max_size / width; width = max_size; }
                         } else {
@@ -69,7 +72,9 @@
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.6));
+                        
+                        // YÜKSEK KALİTE JPEG (%92 Kalite Oranı)
+                        resolve(canvas.toDataURL('image/jpeg', 0.92));
                     }
                 }
             });
@@ -90,7 +95,7 @@
             const fileInput = document.getElementById('imageInput');
             const files = fileInput.files;
 
-            status.innerText = "Fotoğraflar işleniyor...";
+            status.innerText = "Fotoğraflar HD kalitede işleniyor...";
 
             let imageArray = [];
 
@@ -118,7 +123,3 @@
     </script>
 </body>
 </html>
-
-
-
-
