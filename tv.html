@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pano Slayt Ekranı</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             background-color: #000;
             color: #fff;
             margin: 0;
             padding: 0;
+            width: 100vw;
             height: 100vh;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             font-family: Arial, sans-serif;
@@ -24,6 +27,7 @@
             border-radius: 12px;
             text-align: center;
             box-shadow: 0 0 15px rgba(255,255,255,0.1);
+            z-index: 10;
         }
         input[type="password"] {
             padding: 10px;
@@ -45,31 +49,49 @@
             border-radius: 6px;
             cursor: pointer;
         }
+        
+        /* PANO ANA EKRANI (TAM EKRAN) */
         #mainContent {
             display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
         }
+
+        /* NOT EKRANI (Görsel Üzerinde Şık Katman) */
         #noteDisplay {
-            font-size: 2.8rem;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            font-size: 2.5rem;
             font-weight: bold;
-            margin-bottom: 25px;
             text-align: center;
-            padding: 0 30px;
             color: #ffffff;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
-            word-wrap: break-word;
-        }
-        #imageDisplay {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px 25px;
+            border-radius: 10px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
             max-width: 90%;
-            max-height: 70vh;
-            border-radius: 12px;
-            object-fit: contain;
+            word-wrap: break-word;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* FOTOĞRAF EKRANI (FULL RESOLUTION / COVER) */
+        #imageDisplay {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover; /* Resmi ekrana boşluksuz, tam genişlikte sıfıra sıfır yayar */
+            object-position: center;
             display: none;
-            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+            border: none;
+            margin: 0;
+            padding: 0;
         }
     </style>
 </head>
@@ -94,7 +116,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // BELİRLEDİĞİNİZ ŞİFRE (Buradan değiştirebilirsiniz)
         const KORUMA_SIFRESI = "2525";
 
         const firebaseConfig = {
@@ -111,27 +132,27 @@
         let currentIndex = 0;
         let slideInterval = null;
 
-       function girisYap() {
-    const girilen = document.getElementById('pinInput').value;
-    if (girilen === KORUMA_SIFRESI) {
-        document.getElementById('loginBox').style.display = 'none';
-        document.getElementById('mainContent').style.display = 'flex';
-        
-        // Tarayıcıyı Otomatik Tam Ekran Yapma Kodu
-        var elem = document.documentElement;
-        if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-        } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) {
-            elem.msRequestFullscreen();
-        }
+        function girisYap() {
+            const girilen = document.getElementById('pinInput').value;
+            if (girilen === KORUMA_SIFRESI) {
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                
+                // Tarayıcıyı Otomatik Tam Ekran Yapma Kodu
+                var elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
 
-        panoyuBaslat();
-    } else {
-        document.getElementById('errorMsg').style.display = 'block';
-    }
-}
+                panoyuBaslat();
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        }
 
         function panoyuBaslat() {
             db.ref('displayData').on('value', (snapshot) => {
@@ -179,10 +200,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
