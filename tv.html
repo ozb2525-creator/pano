@@ -78,15 +78,26 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        #imageDisplay, #videoDisplay {
+        /* GEÇİŞ EFEKTİ AYARLARI */
+        .media-element {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100vw;
             height: 100vh;
             object-fit: cover;
             object-position: center;
-            display: none;
             border: none;
             margin: 0;
             padding: 0;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out; /* 0.8 saniyelik yumuşak geçiş */
+            pointer-events: none;
+        }
+
+        .media-element.active {
+            opacity: 1;
+            pointer-events: auto;
         }
     </style>
 </head>
@@ -102,8 +113,8 @@
 
     <div id="mainContent">
         <div id="noteDisplay">Pano Hazır...</div>
-        <img id="imageDisplay" src="" alt="Resim">
-        <video id="videoDisplay" autoplay muted playsinline></video>
+        <img id="imageDisplay" class="media-element" src="" alt="Resim">
+        <video id="videoDisplay" class="media-element" autoplay muted playsinline></video>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -162,8 +173,8 @@
                     } else {
                         mediaList = [];
                         if (slideTimeout) clearTimeout(slideTimeout);
-                        document.getElementById('imageDisplay').style.display = 'none';
-                        document.getElementById('videoDisplay').style.display = 'none';
+                        document.getElementById('imageDisplay').classList.remove('active');
+                        document.getElementById('videoDisplay').classList.remove('active');
                     }
                 }
             });
@@ -180,22 +191,28 @@
                 const currentItem = mediaList[currentIndex];
                 currentIndex = (currentIndex + 1) % mediaList.length;
 
-                // İçerik Video mu Resim mi kontrol et
                 if (currentItem.startsWith('data:video')) {
-                    imgElem.style.display = 'none';
-                    videoElem.src = currentItem;
-                    videoElem.style.display = 'block';
-                    videoElem.play().catch(e => console.log(e));
+                    // Videoya geçerken resmi yumuşakça gizle
+                    imgElem.classList.remove('active');
 
-                    // Video bittiğinde bir sonraki medyaya geç
+                    videoElem.src = currentItem;
+                    videoElem.onloadeddata = () => {
+                        videoElem.classList.add('active');
+                        videoElem.play().catch(e => console.log(e));
+                    };
+
                     videoElem.onended = () => {
                         gosterNextMedya();
                     };
                 } else {
+                    // Fotoğrafa geçerken videoyu durdur ve yumuşakça gizle
                     videoElem.pause();
-                    videoElem.style.display = 'none';
+                    videoElem.classList.remove('active');
+
                     imgElem.src = currentItem;
-                    imgElem.style.display = 'block';
+                    imgElem.onload = () => {
+                        imgElem.classList.add('active');
+                    };
 
                     // Fotoğraflar ekranda 5 saniye kalır
                     slideTimeout = setTimeout(gosterNextMedya, 5000);
