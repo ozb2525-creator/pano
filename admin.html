@@ -1,208 +1,262 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pano Yönetimi - Admin</title>
-  <style>
-    :root { --bg: #121214; --card: #1e1e24; --primary: #6366f1; --danger: #ef4444; --text: #f3f4f6; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding: 20px; max-width: 650px; margin: 0 auto; }
-    h2, h3 { color: var(--primary); margin-bottom: 12px; }
-    #login-screen { background: var(--card); padding: 30px; border-radius: 16px; margin-top: 50px; text-align: center; }
-    #login-screen input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #3f3f46; background: #09090b; color: #fff; text-align: center; font-size: 1.2rem; }
-    #admin-panel { display: none; }
-    .card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; font-size: 0.9rem; margin-bottom: 6px; color: #a1a1aa; }
-    select, input[type="text"], input[type="range"], input[type="file"], input[type="password"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #3f3f46; background: #09090b; color: #fff; }
-    .range-val { float: right; color: var(--primary); font-weight: bold; }
-    .toggle-group { display: flex; align-items: center; justify-content: space-between; }
-    .btn { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 10px; }
-    .btn-danger { background: var(--danger); }
-    .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-top: 15px; }
-    .preview-item { position: relative; height: 90px; border-radius: 8px; overflow: hidden; border: 1px solid #3f3f46; background: #000; }
-    .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
-    .media-badge { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); font-size: 10px; padding: 2px 5px; border-radius: 4px; }
-    .delete-btn { position: absolute; top: 4px; right: 4px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; }
-    #status-msg { margin-top: 10px; text-align: center; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pano Admin Paneli</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #1e1e1e;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        h2 { text-align: center; margin-bottom: 20px; color: #4CAF50; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="password"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background-color: #2a2a2a;
+            color: #fff;
+            font-size: 14px;
+        }
+        textarea { resize: vertical; height: 80px; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #45a049; }
+        .btn-reset { background-color: #ff9800; }
+        .btn-reset:hover { background-color: #e68a00; }
+        .btn-logout { background-color: #e53935; }
+        .btn-logout:hover { background-color: #d32f2f; }
+        #status { margin-top: 15px; text-align: center; font-weight: bold; }
+        
+        /* İLERLEME ÇUBUĞU STİLLERİ */
+        #progressContainer {
+            width: 100%;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        #progressBar {
+            width: 0%;
+            height: 22px;
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 22px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            transition: width 0.2s ease-in-out;
+        }
+
+        #panelContent { display: none; }
+        #loginBox { text-align: center; }
+    </style>
 </head>
 <body>
 
-  <!-- ŞİFRE EKRANI -->
-  <div id="login-screen">
-    <h2>Pano Yönetim Girişi</h2>
-    <p style="color:#a1a1aa; font-size:0.9rem; margin-top:5px;">Şifre: 1234</p>
-    <input type="password" id="passInput" placeholder="••••">
-    <button class="btn" onclick="checkPassword()">Giriş Yap</button>
-  </div>
+<div class="container">
+    <h2>Pano Yönetim Paneli</h2>
 
-  <!-- YÖNETİM PANELİ -->
-  <div id="admin-panel">
-    <h2>Dijital Pano Yönetimi</h2>
-
-    <div class="card">
-      <h3>Fotoğraf & Video Yükle</h3>
-      <div class="form-group">
-        <input type="file" id="mediaInput" accept="image/*,video/*" multiple onchange="handleFileSelect(event)">
-      </div>
-      <div class="preview-grid" id="previewGrid"></div>
+    <!-- 1. ADIM: ŞİFRE GİRİŞ KUTUSU -->
+    <div id="loginBox">
+        <div class="form-group">
+            <label for="pinInput">Yönetici Şifresi:</label>
+            <input type="password" id="pinInput" placeholder="Şifrenizi Girin">
+        </div>
+        <button onclick="girisYap()">Giriş Yap</button>
+        <p id="loginError" style="color: #ff5252; display: none; margin-top: 10px;">Hatalı Şifre!</p>
     </div>
 
-    <div class="card">
-      <h3>Slayt & Geçiş Ayarları</h3>
-      <div class="form-group">
-        <label>Fotoğraf Kalış Süresi <span class="range-val" id="duration-val">5 saniye</span></label>
-        <input type="range" id="duration" min="2" max="30" value="5" oninput="document.getElementById('duration-val').innerText = this.value + ' saniye'">
-      </div>
+    <!-- 2. ADIM: YANSITMA PANELİ -->
+    <div id="panelContent">
+        <div class="form-group">
+            <label for="noteInput">Ekran Notu (İsteğe Bağlı):</label>
+            <textarea id="noteInput" placeholder="Ekranda görünecek notu yazın..."></textarea>
+        </div>
 
-      <div class="form-group">
-        <label>Geçiş Efekti Stili</label>
-        <select id="effect">
-          <option value="fade">Yumuşak Geçiş (Fade)</option>
-          <option value="slide">Yana Kayma (Slide)</option>
-          <option value="zoom">Yakınlaşma (Zoom)</option>
-        </select>
-      </div>
+        <div class="form-group">
+            <label for="fileInput">Fotoğraf veya Video Seç:</label>
+            <input type="file" id="fileInput" accept="image/*,video/*" multiple>
+            <small style="color: #aaa; display: block; margin-top: 5px;">Birden fazla fotoğraf/video seçebilirsiniz.</small>
+        </div>
 
-      <div class="form-group toggle-group">
-        <label for="shuffle">Karışık Oynat (Shuffle)</label>
-        <input type="checkbox" id="shuffle" style="width: 20px; height: 20px;">
-      </div>
+        <button onclick="yansit()">Slaytı Ekrana Yansıt</button>
+        <button onclick="secimleriSifirla()" class="btn-reset">Seçimleri Sıfırla</button>
+        <button onclick="cikisYap()" class="btn-logout">Çıkış Yap</button>
+        
+        <!-- YÜZDELİK İLERLEME BARİ -->
+        <div id="progressContainer">
+            <div id="progressBar">0%</div>
+        </div>
 
-      <div class="form-group toggle-group" style="margin-top:10px;">
-        <label for="unmuteVideo">Videoları Sesi Açık Oynat</label>
-        <input type="checkbox" id="unmuteVideo" style="width: 20px; height: 20px;">
-      </div>
+        <div id="status"></div>
     </div>
+</div>
 
-    <div class="card">
-      <h3>Ekran İçeriği & Not</h3>
-      <div class="form-group">
-        <label>Alt Kayar Not Bandı</label>
-        <input type="text" id="ticker" placeholder="Duyurunuzu yazın...">
-      </div>
-    </div>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <button class="btn" onclick="publishToTV()">Yayını ve Ayarları TV'ye Gönder</button>
-    <button class="btn btn-danger" onclick="resetTV()">Eski Yayını & Hafızayı Temizle</button>
-    <div id="status-msg"></div>
-  </div>
+<script>
+    const KORUMA_SIFRESI = "2525";
 
-  <script>
-    const ADMIN_PASSWORD = "1234";
-    let mediaList = []; // Ham File objelerini tutar
-    let db;
-
-    // IndexedDB Versiyon 2 (Temiz Veritabanı Yapısı)
-    const dbRequest = indexedDB.open("TVPanoDB_V2", 1);
-    dbRequest.onupgradeneeded = e => {
-      db = e.target.result;
-      if(!db.objectStoreNames.contains("config")) {
-        db.createObjectStore("config", { keyPath: "id" });
-      }
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
+      authDomain: "deneme-fe19a.firebaseapp.com",
+      databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
+      projectId: "deneme-fe19a"
     };
-    dbRequest.onsuccess = e => { db = e.target.result; };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    function checkPassword() {
-      if (document.getElementById('passInput').value === ADMIN_PASSWORD) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('admin-panel').style.display = 'block';
-      } else {
-        alert('Hatalı Şifre!');
-      }
+    function girisYap() {
+        const girilen = document.getElementById('pinInput').value;
+        const errorElem = document.getElementById('loginError');
+
+        if (girilen === KORUMA_SIFRESI) {
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('panelContent').style.display = 'block';
+            errorElem.style.display = 'none';
+        } else {
+            errorElem.style.display = 'block';
+        }
     }
 
-    function handleFileSelect(event) {
-      const files = event.target.files;
-      if (!files.length) return;
+    function secimleriSifirla() {
+        document.getElementById('fileInput').value = '';
+        document.getElementById('noteInput').value = '';
+        document.getElementById('progressContainer').style.display = 'none';
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressBar').innerText = '0%';
+        const status = document.getElementById('status');
+        status.style.color = "#ffeb3b";
+        status.innerText = "Seçimler ve not temizlendi.";
+        setTimeout(() => { status.innerText = ''; }, 2000);
+    }
 
-      Array.from(files).forEach(file => {
-        mediaList.push({
-          type: file.type.startsWith('video/') ? 'video' : 'image',
-          file: file
+    function cikisYap() {
+        document.getElementById('pinInput').value = '';
+        secimleriSifirla();
+        document.getElementById('loginBox').style.display = 'block';
+        document.getElementById('panelContent').style.display = 'none';
+        document.getElementById('status').innerText = '';
+    }
+
+    function yansit() {
+        const note = document.getElementById('noteInput').value;
+        const fileInput = document.getElementById('fileInput');
+        const files = fileInput.files;
+        const status = document.getElementById('status');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+
+        status.style.color = "#ffeb3b";
+        status.innerText = "Medyalar işleniyor...";
+        
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressBar.innerText = '0%';
+
+        let base64Files = [];
+        let readCount = 0;
+
+        if (files.length === 0) {
+            updateProgress(90, "Veri sunucuya gönderiliyor...");
+            veriyiGonder(note, []);
+            return;
+        }
+
+        for (let i = 0; i < files.length; i++) {
+            const reader = new FileReader();
+            
+            reader.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    // Dosya bazlı okuma ilerlemesi
+                    let filePercent = (e.loaded / e.total);
+                    let totalPercent = Math.round(((readCount + filePercent) / files.length) * 80);
+                    updateProgress(totalPercent, `Medya ${readCount + 1}/${files.length} işleniyor... (%${totalPercent})`);
+                }
+            };
+
+            reader.onload = function(e) {
+                base64Files.push(e.target.result);
+                readCount++;
+
+                let currentPercent = Math.round((readCount / files.length) * 80);
+                updateProgress(currentPercent, `Medya ${readCount}/${files.length} hazırlandı (%${currentPercent})`);
+
+                if (readCount === files.length) {
+                    updateProgress(90, "Sunucuya aktarılıyor... (%90)");
+                    veriyiGonder(note, base64Files);
+                }
+            };
+
+            reader.readAsDataURL(files[i]);
+        }
+    }
+
+    function updateProgress(percent, statusText) {
+        const progressBar = document.getElementById('progressBar');
+        const status = document.getElementById('status');
+        progressBar.style.width = percent + '%';
+        progressBar.innerText = '%' + percent;
+        if (statusText) status.innerText = statusText;
+    }
+
+    function veriyiGonder(note, images) {
+        const status = document.getElementById('status');
+
+        db.ref('displayData').set({
+            note: note,
+            images: images,
+            timestamp: Date.now()
+        }, (error) => {
+            if (error) {
+                status.style.color = "#ff5252";
+                status.innerText = "Hata oluştu! (Dosya boyutu yüksek olabilir)";
+                updateProgress(0, "");
+            } else {
+                updateProgress(100, "Başarıyla TV Ekranına Yansıtıldı!");
+                status.style.color = "#4CAF50";
+                setTimeout(() => {
+                    document.getElementById('progressContainer').style.display = 'none';
+                }, 3000);
+            }
         });
-      });
-      renderPreview();
     }
+</script>
 
-    function renderPreview() {
-      const grid = document.getElementById('previewGrid');
-      grid.innerHTML = '';
-      mediaList.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'preview-item';
-        const url = URL.createObjectURL(item.file);
-        const tag = item.type === 'image' 
-          ? `<img src="${url}"/>` 
-          : `<video src="${url}"></video>`;
-          
-        div.innerHTML = `${tag}<span class="media-badge">${item.type}</span><button class="delete-btn" onclick="removeMedia(${index})">✕</button>`;
-        grid.appendChild(div);
-      });
-    }
-
-    function removeMedia(index) {
-      mediaList.splice(index, 1);
-      renderPreview();
-    }
-
-    function publishToTV() {
-      if (!db) { alert("Veritabanı hazırlanıyor, 1 saniye sonra tekrar basın."); return; }
-      if (mediaList.length === 0) { alert("Lütfen en az 1 fotoğraf veya video ekleyin."); return; }
-
-      const msg = document.getElementById('status-msg');
-      msg.style.color = "#3b82f6";
-      msg.innerText = "Yükleniyor, lütfen bekleyin...";
-
-      // Dosyaları olduğu gibi Blob/File olarak veritabanına aktar
-      const payload = {
-        id: "currentConfig",
-        media: mediaList.map(item => ({ type: item.type, blob: item.file })),
-        interval: parseInt(document.getElementById('duration').value) * 1000,
-        effect: document.getElementById('effect').value,
-        shuffle: document.getElementById('shuffle').checked,
-        unmuteVideo: document.getElementById('unmuteVideo').checked,
-        tickerText: document.getElementById('ticker').value,
-        timestamp: Date.now()
-      };
-
-      const tx = db.transaction("config", "readwrite");
-      const store = tx.objectStore("config");
-      store.put(payload);
-
-      tx.oncomplete = () => {
-        localStorage.setItem("tv_update_signal", Date.now());
-        try {
-          new BroadcastChannel('tv_board_channel').postMessage({ type: "UPDATE" });
-        } catch(e){}
-
-        msg.style.color = "#10b981";
-        msg.innerText = "✓ Başarıyla TV'ye gönderildi!";
-        setTimeout(() => msg.innerText = "", 4000);
-      };
-
-      tx.onerror = (err) => {
-        console.error(err);
-        msg.style.color = "#ef4444";
-        msg.innerText = "✕ Hata oluştu. Lütfen dosya boyutunu kontrol edin.";
-      };
-    }
-
-    function resetTV() {
-      if (!confirm("Ekranda takılı kalan tüm medya ve ayarlar silinecek. Onaylıyor musunuz?")) return;
-      if (!db) return;
-
-      const tx = db.transaction("config", "readwrite");
-      tx.objectStore("config").clear();
-      tx.oncomplete = () => {
-        mediaList = [];
-        renderPreview();
-        localStorage.setItem("tv_update_signal", Date.now());
-        alert("TV ekranı ve veritabanı tamamen sıfırlandı!");
-      };
-    }
-  </script>
 </body>
 </html>
