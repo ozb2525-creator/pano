@@ -1,262 +1,142 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pano Admin Paneli</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #fff;
-            padding: 20px;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            background-color: #1e1e1e;
-            padding: 25px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-        h2 { text-align: center; margin-bottom: 20px; color: #4CAF50; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="password"], textarea, input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #333;
-            background-color: #2a2a2a;
-            color: #fff;
-            font-size: 14px;
-        }
-        textarea { resize: vertical; height: 80px; }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-top: 10px;
-        }
-        button:hover { background-color: #45a049; }
-        .btn-reset { background-color: #ff9800; }
-        .btn-reset:hover { background-color: #e68a00; }
-        .btn-logout { background-color: #e53935; }
-        .btn-logout:hover { background-color: #d32f2f; }
-        #status { margin-top: 15px; text-align: center; font-weight: bold; }
-        
-        /* İLERLEME ÇUBUĞU STİLLERİ */
-        #progressContainer {
-            width: 100%;
-            background-color: #2a2a2a;
-            border-radius: 8px;
-            margin-top: 15px;
-            display: none;
-            overflow: hidden;
-            border: 1px solid #333;
-        }
-        #progressBar {
-            width: 0%;
-            height: 22px;
-            background-color: #4CAF50;
-            text-align: center;
-            line-height: 22px;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            transition: width 0.2s ease-in-out;
-        }
-
-        #panelContent { display: none; }
-        #loginBox { text-align: center; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pano Yönetimi - Admin</title>
+  <style>
+    :root {
+      --bg: #121214;
+      --card: #1e1e24;
+      --primary: #6366f1;
+      --text: #f3f4f6;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h2 {
+      margin-bottom: 20px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .card {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #a1a1aa;
+    }
+    select, input[type="text"], input[type="range"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #3f3f46;
+      background: #09090b;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    .range-val {
+      float: right;
+      color: var(--primary);
+      font-weight: bold;
+    }
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .btn {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Pano Yönetim Paneli</h2>
+  <h2>Dijital Pano Ayarları</h2>
 
-    <!-- 1. ADIM: ŞİFRE GİRİŞ KUTUSU -->
-    <div id="loginBox">
-        <div class="form-group">
-            <label for="pinInput">Yönetici Şifresi:</label>
-            <input type="password" id="pinInput" placeholder="Şifrenizi Girin">
-        </div>
-        <button onclick="girisYap()">Giriş Yap</button>
-        <p id="loginError" style="color: #ff5252; display: none; margin-top: 10px;">Hatalı Şifre!</p>
-    </div>
-
-    <!-- 2. ADIM: YANSITMA PANELİ -->
-    <div id="panelContent">
-        <div class="form-group">
-            <label for="noteInput">Ekran Notu (İsteğe Bağlı):</label>
-            <textarea id="noteInput" placeholder="Ekranda görünecek notu yazın..."></textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="fileInput">Fotoğraf veya Video Seç:</label>
-            <input type="file" id="fileInput" accept="image/*,video/*" multiple>
-            <small style="color: #aaa; display: block; margin-top: 5px;">Birden fazla fotoğraf/video seçebilirsiniz.</small>
-        </div>
-
-        <button onclick="yansit()">Slaytı Ekrana Yansıt</button>
-        <button onclick="secimleriSifirla()" class="btn-reset">Seçimleri Sıfırla</button>
-        <button onclick="cikisYap()" class="btn-logout">Çıkış Yap</button>
-        
-        <!-- YÜZDELİK İLERLEME BARİ -->
-        <div id="progressContainer">
-            <div id="progressBar">0%</div>
-        </div>
-
-        <div id="status"></div>
-    </div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<script>
-    const KORUMA_SIFRESI = "2525";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
-      authDomain: "deneme-fe19a.firebaseapp.com",
-      databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
-      projectId: "deneme-fe19a"
-    };
+  <div class="card">
+    <h3>Slayt & Geçiş Ayarları</h3>
+    <br>
     
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    <!-- Slayt Süresi -->
+    <div class="form-group">
+      <label>
+        Slayt Geçiş Süresi 
+        <span class="range-val" id="duration-val">5 saniye</span>
+      </label>
+      <input type="range" id="duration" min="2" max="30" value="5" oninput="document.getElementById('duration-val').innerText = this.value + ' saniye'">
+    </div>
 
-    function girisYap() {
-        const girilen = document.getElementById('pinInput').value;
-        const errorElem = document.getElementById('loginError');
+    <!-- Geçiş Efekti -->
+    <div class="form-group">
+      <label>Geçiş Efekti Stili</label>
+      <select id="effect">
+        <option value="fade">Yumuşak Geçiş (Fade)</option>
+        <option value="slide">Yana Kayma (Slide)</option>
+        <option value="zoom">Yakınlaşma (Zoom)</option>
+        <option value="kenburns">Ken Burns (Pan & Zoom)</option>
+      </select>
+    </div>
 
-        if (girilen === KORUMA_SIFRESI) {
-            document.getElementById('loginBox').style.display = 'none';
-            document.getElementById('panelContent').style.display = 'block';
-            errorElem.style.display = 'none';
-        } else {
-            errorElem.style.display = 'block';
-        }
+    <!-- Oynatma Sırası -->
+    <div class="form-group toggle-group">
+      <label for="shuffle">Fotoğrafları Karışık Oynat (Shuffle)</label>
+      <input type="checkbox" id="shuffle" style="width: 20px; height: 20px;">
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Ekran İçeriği</h3>
+    <br>
+    
+    <!-- Alt Kayar Yazı / Not -->
+    <div class="form-group">
+      <label>Alt Kayar Not / Duyuru Bandı</label>
+      <input type="text" id="ticker" placeholder="Örn: Akşam saat 20:00'de spora gidilecek!">
+    </div>
+  </div>
+
+  <button class="btn" onclick="saveSettings()">Ayarları TV'ye Gönder</button>
+
+  <script>
+    function saveSettings() {
+      const settings = {
+        interval: document.getElementById('duration').value * 1000,
+        effect: document.getElementById('effect').value,
+        shuffle: document.getElementById('shuffle').checked,
+        tickerText: document.getElementById('ticker').value
+      };
+
+      console.log("Kaydedilen Ayarlar:", settings);
+      alert("Ayarlar TV ekranına gönderildi!");
+      
+      // Buraya veritabanı veya WebSocket gönderme kodunu ekleyebilirsin.
     }
-
-    function secimleriSifirla() {
-        document.getElementById('fileInput').value = '';
-        document.getElementById('noteInput').value = '';
-        document.getElementById('progressContainer').style.display = 'none';
-        document.getElementById('progressBar').style.width = '0%';
-        document.getElementById('progressBar').innerText = '0%';
-        const status = document.getElementById('status');
-        status.style.color = "#ffeb3b";
-        status.innerText = "Seçimler ve not temizlendi.";
-        setTimeout(() => { status.innerText = ''; }, 2000);
-    }
-
-    function cikisYap() {
-        document.getElementById('pinInput').value = '';
-        secimleriSifirla();
-        document.getElementById('loginBox').style.display = 'block';
-        document.getElementById('panelContent').style.display = 'none';
-        document.getElementById('status').innerText = '';
-    }
-
-    function yansit() {
-        const note = document.getElementById('noteInput').value;
-        const fileInput = document.getElementById('fileInput');
-        const files = fileInput.files;
-        const status = document.getElementById('status');
-        const progressContainer = document.getElementById('progressContainer');
-        const progressBar = document.getElementById('progressBar');
-
-        status.style.color = "#ffeb3b";
-        status.innerText = "Medyalar işleniyor...";
-        
-        progressContainer.style.display = 'block';
-        progressBar.style.width = '0%';
-        progressBar.innerText = '0%';
-
-        let base64Files = [];
-        let readCount = 0;
-
-        if (files.length === 0) {
-            updateProgress(90, "Veri sunucuya gönderiliyor...");
-            veriyiGonder(note, []);
-            return;
-        }
-
-        for (let i = 0; i < files.length; i++) {
-            const reader = new FileReader();
-            
-            reader.onprogress = function(e) {
-                if (e.lengthComputable) {
-                    // Dosya bazlı okuma ilerlemesi
-                    let filePercent = (e.loaded / e.total);
-                    let totalPercent = Math.round(((readCount + filePercent) / files.length) * 80);
-                    updateProgress(totalPercent, `Medya ${readCount + 1}/${files.length} işleniyor... (%${totalPercent})`);
-                }
-            };
-
-            reader.onload = function(e) {
-                base64Files.push(e.target.result);
-                readCount++;
-
-                let currentPercent = Math.round((readCount / files.length) * 80);
-                updateProgress(currentPercent, `Medya ${readCount}/${files.length} hazırlandı (%${currentPercent})`);
-
-                if (readCount === files.length) {
-                    updateProgress(90, "Sunucuya aktarılıyor... (%90)");
-                    veriyiGonder(note, base64Files);
-                }
-            };
-
-            reader.readAsDataURL(files[i]);
-        }
-    }
-
-    function updateProgress(percent, statusText) {
-        const progressBar = document.getElementById('progressBar');
-        const status = document.getElementById('status');
-        progressBar.style.width = percent + '%';
-        progressBar.innerText = '%' + percent;
-        if (statusText) status.innerText = statusText;
-    }
-
-    function veriyiGonder(note, images) {
-        const status = document.getElementById('status');
-
-        db.ref('displayData').set({
-            note: note,
-            images: images,
-            timestamp: Date.now()
-        }, (error) => {
-            if (error) {
-                status.style.color = "#ff5252";
-                status.innerText = "Hata oluştu! (Dosya boyutu yüksek olabilir)";
-                updateProgress(0, "");
-            } else {
-                updateProgress(100, "Başarıyla TV Ekranına Yansıtıldı!");
-                status.style.color = "#4CAF50";
-                setTimeout(() => {
-                    document.getElementById('progressContainer').style.display = 'none';
-                }, 3000);
-            }
-        });
-    }
-</script>
-
+  </script>
 </body>
 </html>
