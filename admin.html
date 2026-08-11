@@ -5,124 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pano Yönetimi - Admin</title>
   <style>
-    :root {
-      --bg: #121214;
-      --card: #1e1e24;
-      --primary: #6366f1;
-      --danger: #ef4444;
-      --text: #f3f4f6;
-    }
+    :root { --bg: #121214; --card: #1e1e24; --primary: #6366f1; --danger: #ef4444; --text: #f3f4f6; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
-      padding: 20px;
-      max-width: 650px;
-      margin: 0 auto;
-    }
-    h2, h3 { font-weight: 600; color: var(--primary); margin-bottom: 12px; }
-    
-    /* LOGIN PANELİ */
-    #login-screen {
-      background: var(--card);
-      padding: 30px;
-      border-radius: 16px;
-      margin-top: 50px;
-      text-align: center;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    #login-screen input {
-      width: 100%;
-      padding: 12px;
-      margin: 15px 0;
-      border-radius: 8px;
-      border: 1px solid #3f3f46;
-      background: #09090b;
-      color: #fff;
-      text-align: center;
-      font-size: 1.2rem;
-      letter-spacing: 4px;
-    }
-
-    /* ANA ADMIN PANELİ */
+    body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding: 20px; max-width: 650px; margin: 0 auto; }
+    h2, h3 { color: var(--primary); margin-bottom: 12px; }
+    #login-screen { background: var(--card); padding: 30px; border-radius: 16px; margin-top: 50px; text-align: center; }
+    #login-screen input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #3f3f46; background: #09090b; color: #fff; text-align: center; font-size: 1.2rem; }
     #admin-panel { display: none; }
-    .card {
-      background: var(--card);
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
+    .card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
     .form-group { margin-bottom: 15px; }
     label { display: block; font-size: 0.9rem; margin-bottom: 6px; color: #a1a1aa; }
-    select, input[type="text"], input[type="range"], input[type="file"], input[type="password"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #3f3f46;
-      background: #09090b;
-      color: #fff;
-      font-size: 0.95rem;
-    }
+    select, input[type="text"], input[type="range"], input[type="file"], input[type="password"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #3f3f46; background: #09090b; color: #fff; }
     .range-val { float: right; color: var(--primary); font-weight: bold; }
     .toggle-group { display: flex; align-items: center; justify-content: space-between; }
-    .btn {
-      width: 100%;
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 14px;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .btn:hover { opacity: 0.9; }
-    
-    /* Medya Galerisi */
-    .preview-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-      gap: 10px;
-      margin-top: 15px;
-    }
-    .preview-item {
-      position: relative;
-      height: 90px;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid #3f3f46;
-      background: #000;
-    }
-    .preview-item img, .preview-item video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .media-badge {
-      position: absolute;
-      bottom: 4px;
-      left: 4px;
-      background: rgba(0,0,0,0.7);
-      font-size: 10px;
-      padding: 2px 5px;
-      border-radius: 4px;
-    }
-    .delete-btn {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      background: var(--danger);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 22px;
-      height: 22px;
-      font-size: 12px;
-      cursor: pointer;
-    }
+    .btn { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 10px; }
+    .btn-danger { background: var(--danger); }
+    .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-top: 15px; }
+    .preview-item { position: relative; height: 90px; border-radius: 8px; overflow: hidden; border: 1px solid #3f3f46; background: #000; }
+    .preview-item img, .preview-item video { width: 100%; height: 100%; object-fit: cover; }
+    .media-badge { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); font-size: 10px; padding: 2px 5px; border-radius: 4px; }
+    .delete-btn { position: absolute; top: 4px; right: 4px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; }
+    #status-msg { margin-top: 10px; text-align: center; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -130,38 +33,28 @@
   <!-- ŞİFRE EKRANI -->
   <div id="login-screen">
     <h2>Pano Yönetim Girişi</h2>
-    <p style="color:#a1a1aa; font-size:0.9rem;">Devam etmek için yönetici şifresini girin.</p>
-    <input type="password" id="passInput" placeholder="••••" maxlength="10">
+    <p style="color:#a1a1aa; font-size:0.9rem; margin-top:5px;">Şifre: 1234</p>
+    <input type="password" id="passInput" placeholder="••••">
     <button class="btn" onclick="checkPassword()">Giriş Yap</button>
-    <p id="loginError" style="color:var(--danger); font-size:0.85rem; margin-top:10px; display:none;">Hatalı Şifre!</p>
   </div>
 
   <!-- YÖNETİM PANELİ -->
   <div id="admin-panel">
     <h2>Dijital Pano Yönetimi</h2>
 
-    <!-- 1. MEDYA YÜKLEME (FOTOĞRAF & VİDEO) -->
     <div class="card">
       <h3>Fotoğraf & Video Yükle</h3>
       <div class="form-group">
-        <label>Cihazdan Medya Dosyaları Seç (Fotoğraf veya Video):</label>
         <input type="file" id="mediaInput" accept="image/*,video/*" multiple onchange="handleFileSelect(event)">
       </div>
-      
       <div class="preview-grid" id="previewGrid"></div>
     </div>
 
-    <!-- 2. SLAYT VE GEÇİŞ AYARLARI -->
     <div class="card">
       <h3>Slayt & Geçiş Ayarları</h3>
-      
       <div class="form-group">
-        <label>
-          Fotoğraf Kalış Süresi 
-          <span class="range-val" id="duration-val">5 saniye</span>
-        </label>
+        <label>Fotoğraf Kalış Süresi <span class="range-val" id="duration-val">5 saniye</span></label>
         <input type="range" id="duration" min="2" max="30" value="5" oninput="document.getElementById('duration-val').innerText = this.value + ' saniye'">
-        <small style="color:#71717a;">*Videolar kendi süresi bitene kadar oynatılır.</small>
       </div>
 
       <div class="form-group">
@@ -170,7 +63,6 @@
           <option value="fade">Yumuşak Geçiş (Fade)</option>
           <option value="slide">Yana Kayma (Slide)</option>
           <option value="zoom">Yakınlaşma (Zoom)</option>
-          <option value="kenburns">Ken Burns (Pan & Zoom)</option>
         </select>
       </div>
 
@@ -180,34 +72,45 @@
       </div>
 
       <div class="form-group toggle-group" style="margin-top:10px;">
-        <label for="muteVideo">Videoları Sesi Açık Oynat</label>
+        <label for="unmuteVideo">Videoları Sesi Açık Oynat</label>
         <input type="checkbox" id="unmuteVideo" style="width: 20px; height: 20px;">
       </div>
     </div>
 
-    <!-- 3. ALT BİLGİ BANDI -->
     <div class="card">
       <h3>Ekran İçeriği & Not</h3>
       <div class="form-group">
-        <label>Alt Kayar Not / Duyuru Bandı</label>
-        <input type="text" id="ticker" placeholder="Örn: Akşam saat 20:00'de spora gidilecek!">
+        <label>Alt Kayar Not Bandı</label>
+        <input type="text" id="ticker" placeholder="Duyurunuzu yazın...">
       </div>
     </div>
 
     <button class="btn" onclick="publishToTV()">Yayını ve Ayarları TV'ye Gönder</button>
+    <button class="btn btn-danger" onclick="resetTV()">Eski Yayını & Hafızayı Temizle</button>
+    <div id="status-msg"></div>
   </div>
 
   <script>
-    const ADMIN_PASSWORD = "2525"; // Varsayılan Şifre
-    let mediaList = [];
+    const ADMIN_PASSWORD = "1234";
+    let mediaList = []; // Ham File objelerini tutar
+    let db;
+
+    // IndexedDB Versiyon 2 (Temiz Veritabanı Yapısı)
+    const dbRequest = indexedDB.open("TVPanoDB_V2", 1);
+    dbRequest.onupgradeneeded = e => {
+      db = e.target.result;
+      if(!db.objectStoreNames.contains("config")) {
+        db.createObjectStore("config", { keyPath: "id" });
+      }
+    };
+    dbRequest.onsuccess = e => { db = e.target.result; };
 
     function checkPassword() {
-      const input = document.getElementById('passInput').value;
-      if (input === ADMIN_PASSWORD) {
+      if (document.getElementById('passInput').value === ADMIN_PASSWORD) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('admin-panel').style.display = 'block';
       } else {
-        document.getElementById('loginError').style.display = 'block';
+        alert('Hatalı Şifre!');
       }
     }
 
@@ -216,18 +119,12 @@
       if (!files.length) return;
 
       Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        const isVideo = file.type.startsWith('video/');
-        
-        reader.onload = function(e) {
-          mediaList.push({
-            type: isVideo ? 'video' : 'image',
-            src: e.target.result
-          });
-          renderPreview();
-        };
-        reader.readAsDataURL(file);
+        mediaList.push({
+          type: file.type.startsWith('video/') ? 'video' : 'image',
+          file: file
+        });
       });
+      renderPreview();
     }
 
     function renderPreview() {
@@ -236,20 +133,12 @@
       mediaList.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'preview-item';
-        
-        if (item.type === 'image') {
-          div.innerHTML = `
-            <img src="${item.src}" />
-            <span class="media-badge">Fotoğraf</span>
-            <button class="delete-btn" onclick="removeMedia(${index})">✕</button>
-          `;
-        } else {
-          div.innerHTML = `
-            <video src="${item.src}"></video>
-            <span class="media-badge" style="background:#6366f1;">Video</span>
-            <button class="delete-btn" onclick="removeMedia(${index})">✕</button>
-          `;
-        }
+        const url = URL.createObjectURL(item.file);
+        const tag = item.type === 'image' 
+          ? `<img src="${url}"/>` 
+          : `<video src="${url}"></video>`;
+          
+        div.innerHTML = `${tag}<span class="media-badge">${item.type}</span><button class="delete-btn" onclick="removeMedia(${index})">✕</button>`;
         grid.appendChild(div);
       });
     }
@@ -260,19 +149,59 @@
     }
 
     function publishToTV() {
+      if (!db) { alert("Veritabanı hazırlanıyor, 1 saniye sonra tekrar basın."); return; }
+      if (mediaList.length === 0) { alert("Lütfen en az 1 fotoğraf veya video ekleyin."); return; }
+
+      const msg = document.getElementById('status-msg');
+      msg.style.color = "#3b82f6";
+      msg.innerText = "Yükleniyor, lütfen bekleyin...";
+
+      // Dosyaları olduğu gibi Blob/File olarak veritabanına aktar
       const payload = {
-        media: mediaList,
+        id: "currentConfig",
+        media: mediaList.map(item => ({ type: item.type, blob: item.file })),
         interval: parseInt(document.getElementById('duration').value) * 1000,
         effect: document.getElementById('effect').value,
         shuffle: document.getElementById('shuffle').checked,
         unmuteVideo: document.getElementById('unmuteVideo').checked,
-        tickerText: document.getElementById('ticker').value
+        tickerText: document.getElementById('ticker').value,
+        timestamp: Date.now()
       };
 
-      const channel = new BroadcastChannel('tv_board_channel');
-      channel.postMessage(payload);
+      const tx = db.transaction("config", "readwrite");
+      const store = tx.objectStore("config");
+      store.put(payload);
 
-      alert('Yayın ve ayarlar TV ekranına başarıyla gönderildi!');
+      tx.oncomplete = () => {
+        localStorage.setItem("tv_update_signal", Date.now());
+        try {
+          new BroadcastChannel('tv_board_channel').postMessage({ type: "UPDATE" });
+        } catch(e){}
+
+        msg.style.color = "#10b981";
+        msg.innerText = "✓ Başarıyla TV'ye gönderildi!";
+        setTimeout(() => msg.innerText = "", 4000);
+      };
+
+      tx.onerror = (err) => {
+        console.error(err);
+        msg.style.color = "#ef4444";
+        msg.innerText = "✕ Hata oluştu. Lütfen dosya boyutunu kontrol edin.";
+      };
+    }
+
+    function resetTV() {
+      if (!confirm("Ekranda takılı kalan tüm medya ve ayarlar silinecek. Onaylıyor musunuz?")) return;
+      if (!db) return;
+
+      const tx = db.transaction("config", "readwrite");
+      tx.objectStore("config").clear();
+      tx.oncomplete = () => {
+        mediaList = [];
+        renderPreview();
+        localStorage.setItem("tv_update_signal", Date.now());
+        alert("TV ekranı ve veritabanı tamamen sıfırlandı!");
+      };
     }
   </script>
 </body>
