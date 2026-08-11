@@ -52,9 +52,20 @@
             margin-top: 10px;
         }
         button:hover { background-color: #45a049; }
+        .btn-reset {
+            background-color: #ff9800;
+        }
+        .btn-reset:hover {
+            background-color: #e68a00;
+        }
+        .btn-logout {
+            background-color: #e53935;
+        }
+        .btn-logout:hover {
+            background-color: #d32f2f;
+        }
         #status { margin-top: 15px; text-align: center; font-weight: bold; }
         
-        /* Şifre girilmeden önceki ve sonraki gizlilik ayarları */
         #panelContent { display: none; }
         #loginBox { text-align: center; }
     </style>
@@ -74,7 +85,7 @@
         <p id="loginError" style="color: #ff5252; display: none; margin-top: 10px;">Hatalı Şifre!</p>
     </div>
 
-    <!-- 2. ADIM: YANSITMA PANELİ (ŞİFRE DOĞRUYSA AÇILIR) -->
+    <!-- 2. ADIM: YANSITMA PANELİ -->
     <div id="panelContent">
         <div class="form-group">
             <label for="noteInput">Ekran Notu (İsteğe Bağlı):</label>
@@ -88,7 +99,8 @@
         </div>
 
         <button onclick="yansit()">Slaytı Ekrana Yansıt</button>
-        <button onclick="cikisYap()" style="background-color: #e53935; margin-top: 15px;">Çıkış Yap</button>
+        <button onclick="secimleriSifirla()" class="btn-reset">Seçimleri Sıfırla</button>
+        <button onclick="cikisYap()" class="btn-logout">Çıkış Yap</button>
         
         <div id="status"></div>
     </div>
@@ -123,8 +135,18 @@
         }
     }
 
+    function secimleriSifirla() {
+        document.getElementById('fileInput').value = '';
+        document.getElementById('noteInput').value = '';
+        const status = document.getElementById('status');
+        status.style.color = "#ffeb3b";
+        status.innerText = "Seçimler ve not temizlendi.";
+        setTimeout(() => { status.innerText = ''; }, 2000);
+    }
+
     function cikisYap() {
         document.getElementById('pinInput').value = '';
+        secimleriSifirla();
         document.getElementById('loginBox').style.display = 'block';
         document.getElementById('panelContent').style.display = 'none';
         document.getElementById('status').innerText = '';
