@@ -1,130 +1,184 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pano Kontrol</title>
+    <title>Pano Admin Paneli</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: #fff; padding: 20px; text-align: center; }
-        h2 { color: #4CAF50; margin-bottom: 20px; }
-        label { display: block; text-align: left; margin-top: 15px; font-size: 14px; color: #aaa; }
-        textarea, input, button { width: 100%; padding: 14px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; font-size: 16px; }
-        textarea { height: 80px; background: #222; color: #fff; border: 1px solid #333; }
-        input[type="file"], input[type="password"] { background: #222; color: #fff; padding: 10px; }
-        button { background: #4CAF50; color: #fff; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        button:active { background: #388E3C; }
-        #status { margin-top: 15px; color: #ffeb3b; font-weight: bold; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            padding: 20px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #1e1e1e;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        h2 { text-align: center; margin-bottom: 20px; color: #4CAF50; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="password"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background-color: #2a2a2a;
+            color: #fff;
+            font-size: 14px;
+        }
+        textarea { resize: vertical; height: 80px; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #45a049; }
+        #status { margin-top: 15px; text-align: center; font-weight: bold; }
+        
+        /* Şifre girilmeden önceki ve sonraki gizlilik ayarları */
+        #panelContent { display: none; }
+        #loginBox { text-align: center; }
     </style>
 </head>
 <body>
 
+<div class="container">
     <h2>Pano Yönetim Paneli</h2>
+
+    <!-- 1. ADIM: ŞİFRE GİRİŞ KUTUSU -->
+    <div id="loginBox">
+        <div class="form-group">
+            <label for="pinInput">Yönetici Şifresi:</label>
+            <input type="password" id="pinInput" placeholder="Şifrenizi Girin">
+        </div>
+        <button onclick="girisYap()">Giriş Yap</button>
+        <p id="loginError" style="color: #ff5252; display: none; margin-top: 10px;">Hatalı Şifre!</p>
+    </div>
+
+    <!-- 2. ADIM: YANSITMA PANELİ (ŞİFRE DOĞRUYSA AÇILIR) -->
+    <div id="panelContent">
+        <div class="form-group">
+            <label for="noteInput">Ekran Notu (İsteğe Bağlı):</label>
+            <textarea id="noteInput" placeholder="Ekranda görünecek notu yazın..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="fileInput">Fotoğraf veya Video Seç:</label>
+            <input type="file" id="fileInput" accept="image/*,video/*" multiple>
+            <small style="color: #aaa; display: block; margin-top: 5px;">Birden fazla fotoğraf/video seçebilirsiniz.</small>
+        </div>
+
+        <button onclick="yansit()">Slaytı Ekrana Yansıt</button>
+        <button onclick="cikisYap()" style="background-color: #e53935; margin-top: 15px;">Çıkış Yap</button>
+        
+        <div id="status"></div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    const KORUMA_SIFRESI = "2525";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
+      authDomain: "deneme-fe19a.firebaseapp.com",
+      databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
+      projectId: "deneme-fe19a"
+    };
     
-    <label>Ekrana Yazılacak Not / Yazı:</label>
-    <textarea id="noteInput" placeholder="Yazınızı buraya girin..."></textarea>
-    
-    <label>Galeriden Fotoğraf veya Video Seç (Kısa MP4):</label>
-    <input type="file" id="imageInput" accept="image/*,video/mp4" multiple>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    <label>Erişim Şifreniz:</label>
-    <input type="password" id="passInput" placeholder="Şifrenizi girin">
+    function girisYap() {
+        const girilen = document.getElementById('pinInput').value;
+        const errorElem = document.getElementById('loginError');
 
-    <button onclick="verileriGonder()">Slaytı Ekrana Yansıt</button>
-    <div id="status"></div>
+        if (girilen === KORUMA_SIFRESI) {
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('panelContent').style.display = 'block';
+            errorElem.style.display = 'none';
+        } else {
+            errorElem.style.display = 'block';
+        }
+    }
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    function cikisYap() {
+        document.getElementById('pinInput').value = '';
+        document.getElementById('loginBox').style.display = 'block';
+        document.getElementById('panelContent').style.display = 'none';
+        document.getElementById('status').innerText = '';
+    }
 
-    <script>
-        const KORUMA_SIFRESI = "2525";
+    function yansit() {
+        const note = document.getElementById('noteInput').value;
+        const fileInput = document.getElementById('fileInput');
+        const files = fileInput.files;
+        const status = document.getElementById('status');
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
-          authDomain: "deneme-fe19a.firebaseapp.com",
-          databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
-          projectId: "deneme-fe19a"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        status.style.color = "#ffeb3b";
+        status.innerText = "Dosyalar işleniyor, lütfen bekleyin...";
 
-        function dosyayiOku(file) {
-            return new Promise((resolve) => {
-                if (file.type.startsWith('video/')) {
-                    // Video dosyası kalitesi bozulmadan orijinal okunur
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = function (e) {
-                        resolve(e.target.result);
-                    };
-                } else {
-                    // Resim dosyası yüksek kalitede (1920px, %92 kalite) işlenir
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = function (event) {
-                        const img = new Image();
-                        img.src = event.target.result;
-                        img.onload = function () {
-                            const canvas = document.createElement('canvas');
-                            let width = img.width;
-                            let height = img.height;
-                            const max_size = 1920; 
-                            
-                            if (width > height) {
-                                if (width > max_size) { height *= max_size / width; width = max_size; }
-                            } else {
-                                if (height > max_size) { width *= max_size / height; height = max_size; }
-                            }
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            resolve(canvas.toDataURL('image/jpeg', 0.92));
-                        }
-                    }
-                }
-            });
+        let base64Files = [];
+        let readCount = 0;
+
+        if (files.length === 0) {
+            veriyiGonder(note, []);
+            return;
         }
 
-        async function verileriGonder() {
-            const status = document.getElementById('status');
-            const userPass = document.getElementById('passInput').value;
+        for (let i = 0; i < files.length; i++) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                base64Files.push(e.target.result);
+                readCount++;
 
-            if (userPass !== KORUMA_SIFRESI) {
-                status.innerText = "Hata: Yanlış Şifre!";
+                if (readCount === files.length) {
+                    veriyiGonder(note, base64Files);
+                }
+            };
+            reader.readAsDataURL(files[i]);
+        }
+    }
+
+    function veriyiGonder(note, images) {
+        const status = document.getElementById('status');
+
+        db.ref('displayData').set({
+            note: note,
+            images: images,
+            timestamp: Date.now()
+        }, (error) => {
+            if (error) {
                 status.style.color = "#ff5252";
-                return;
+                status.innerText = "Hata oluştu! (Boyut yüksek olabilir)";
+            } else {
+                status.style.color = "#4CAF50";
+                status.innerText = "Başarıyla TV Ekranına Yansıtıldı!";
             }
+        });
+    }
+</script>
 
-            status.style.color = "#ffeb3b";
-            const note = document.getElementById('noteInput').value;
-            const fileInput = document.getElementById('imageInput');
-            const files = fileInput.files;
-
-            status.innerText = "Medyalar işleniyor...";
-
-            let mediaArray = [];
-
-            if (files.length > 0) {
-                for (let i = 0; i < files.length; i++) {
-                    status.innerText = `Medya ${i + 1} / ${files.length} işleniyor...`;
-                    const base64Data = await dosyayiOku(files[i]);
-                    mediaArray.push(base64Data);
-                }
-            }
-
-            status.innerText = "Ekrana gönderiliyor...";
-
-            db.ref('displayData').set({
-                note: note,
-                images: mediaArray,
-                lastUpdated: Date.now()
-            }).then(() => {
-                status.innerText = "Başarıyla Yansıtıldı!";
-                setTimeout(() => status.innerText = "", 3000);
-            }).catch(err => {
-                status.innerText = "Hata: " + err.message;
-            });
-        }
-    </script>
 </body>
 </html>
