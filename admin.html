@@ -52,20 +52,34 @@
             margin-top: 10px;
         }
         button:hover { background-color: #45a049; }
-        .btn-reset {
-            background-color: #ff9800;
-        }
-        .btn-reset:hover {
-            background-color: #e68a00;
-        }
-        .btn-logout {
-            background-color: #e53935;
-        }
-        .btn-logout:hover {
-            background-color: #d32f2f;
-        }
+        .btn-reset { background-color: #ff9800; }
+        .btn-reset:hover { background-color: #e68a00; }
+        .btn-logout { background-color: #e53935; }
+        .btn-logout:hover { background-color: #d32f2f; }
         #status { margin-top: 15px; text-align: center; font-weight: bold; }
         
+        /* İLERLEME ÇUBUĞU STİLLERİ */
+        #progressContainer {
+            width: 100%;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        #progressBar {
+            width: 0%;
+            height: 22px;
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 22px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            transition: width 0.2s ease-in-out;
+        }
+
         #panelContent { display: none; }
         #loginBox { text-align: center; }
     </style>
@@ -102,6 +116,11 @@
         <button onclick="secimleriSifirla()" class="btn-reset">Seçimleri Sıfırla</button>
         <button onclick="cikisYap()" class="btn-logout">Çıkış Yap</button>
         
+        <!-- YÜZDELİK İLERLEME BARİ -->
+        <div id="progressContainer">
+            <div id="progressBar">0%</div>
+        </div>
+
         <div id="status"></div>
     </div>
 </div>
@@ -138,6 +157,9 @@
     function secimleriSifirla() {
         document.getElementById('fileInput').value = '';
         document.getElementById('noteInput').value = '';
+        document.getElementById('progressContainer').style.display = 'none';
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressBar').innerText = '0%';
         const status = document.getElementById('status');
         status.style.color = "#ffeb3b";
         status.innerText = "Seçimler ve not temizlendi.";
@@ -157,30 +179,60 @@
         const fileInput = document.getElementById('fileInput');
         const files = fileInput.files;
         const status = document.getElementById('status');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
 
         status.style.color = "#ffeb3b";
-        status.innerText = "Dosyalar işleniyor, lütfen bekleyin...";
+        status.innerText = "Medyalar işleniyor...";
+        
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressBar.innerText = '0%';
 
         let base64Files = [];
         let readCount = 0;
 
         if (files.length === 0) {
+            updateProgress(90, "Veri sunucuya gönderiliyor...");
             veriyiGonder(note, []);
             return;
         }
 
         for (let i = 0; i < files.length; i++) {
             const reader = new FileReader();
+            
+            reader.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    // Dosya bazlı okuma ilerlemesi
+                    let filePercent = (e.loaded / e.total);
+                    let totalPercent = Math.round(((readCount + filePercent) / files.length) * 80);
+                    updateProgress(totalPercent, `Medya ${readCount + 1}/${files.length} işleniyor... (%${totalPercent})`);
+                }
+            };
+
             reader.onload = function(e) {
                 base64Files.push(e.target.result);
                 readCount++;
 
+                let currentPercent = Math.round((readCount / files.length) * 80);
+                updateProgress(currentPercent, `Medya ${readCount}/${files.length} hazırlandı (%${currentPercent})`);
+
                 if (readCount === files.length) {
+                    updateProgress(90, "Sunucuya aktarılıyor... (%90)");
                     veriyiGonder(note, base64Files);
                 }
             };
+
             reader.readAsDataURL(files[i]);
         }
+    }
+
+    function updateProgress(percent, statusText) {
+        const progressBar = document.getElementById('progressBar');
+        const status = document.getElementById('status');
+        progressBar.style.width = percent + '%';
+        progressBar.innerText = '%' + percent;
+        if (statusText) status.innerText = statusText;
     }
 
     function veriyiGonder(note, images) {
@@ -193,10 +245,14 @@
         }, (error) => {
             if (error) {
                 status.style.color = "#ff5252";
-                status.innerText = "Hata oluştu! (Boyut yüksek olabilir)";
+                status.innerText = "Hata oluştu! (Dosya boyutu yüksek olabilir)";
+                updateProgress(0, "");
             } else {
+                updateProgress(100, "Başarıyla TV Ekranına Yansıtıldı!");
                 status.style.color = "#4CAF50";
-                status.innerText = "Başarıyla TV Ekranına Yansıtıldı!";
+                setTimeout(() => {
+                    document.getElementById('progressContainer').style.display = 'none';
+                }, 3000);
             }
         });
     }
