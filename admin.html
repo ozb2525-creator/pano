@@ -28,7 +28,7 @@
         h2 { text-align: center; margin-bottom: 20px; color: #4CAF50; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="password"], textarea, input[type="file"], input[type="number"], select {
+        input[type="text"], input[type="password"], textarea, input[type="file"] {
             width: 100%;
             padding: 10px;
             border-radius: 6px;
@@ -112,22 +112,6 @@
             <small style="color: #aaa; display: block; margin-top: 5px;">Birden fazla fotoğraf/video seçebilirsiniz.</small>
         </div>
 
-        <!-- YENİ EKLENEN SÜRE VE EFEKT KUTUCUKLARI -->
-        <div class="form-group">
-            <label for="durationInput">Görsel Kalış Süresi (Saniye):</label>
-            <input type="number" id="durationInput" value="5" min="1" max="60">
-        </div>
-
-        <div class="form-group">
-            <label for="effectInput">Geçiş Efekti:</label>
-            <select id="effectInput">
-                <option value="fade">Yumuşak Geçiş (Fade)</option>
-                <option value="slide">Yana Kayma (Slide)</option>
-                <option value="zoom">Yakınlaşma (Zoom)</option>
-                <option value="none">Efektsiz (Direkt)</option>
-            </select>
-        </div>
-
         <button onclick="yansit()">Slaytı Ekrana Yansıt</button>
         <button onclick="secimleriSifirla()" class="btn-reset">Seçimleri Sıfırla</button>
         <button onclick="cikisYap()" class="btn-logout">Çıkış Yap</button>
@@ -173,8 +157,6 @@
     function secimleriSifirla() {
         document.getElementById('fileInput').value = '';
         document.getElementById('noteInput').value = '';
-        document.getElementById('durationInput').value = '5';
-        document.getElementById('effectInput').value = 'fade';
         document.getElementById('progressContainer').style.display = 'none';
         document.getElementById('progressBar').style.width = '0%';
         document.getElementById('progressBar').innerText = '0%';
@@ -194,8 +176,6 @@
 
     function yansit() {
         const note = document.getElementById('noteInput').value;
-        const duration = parseInt(document.getElementById('durationInput').value) || 5;
-        const effect = document.getElementById('effectInput').value;
         const fileInput = document.getElementById('fileInput');
         const files = fileInput.files;
         const status = document.getElementById('status');
@@ -214,7 +194,7 @@
 
         if (files.length === 0) {
             updateProgress(90, "Veri sunucuya gönderiliyor...");
-            veriyiGonder(note, [], duration, effect);
+            veriyiGonder(note, []);
             return;
         }
 
@@ -238,7 +218,7 @@
 
                 if (readCount === files.length) {
                     updateProgress(90, "Sunucuya aktarılıyor... (%90)");
-                    veriyiGonder(note, base64Files, duration, effect);
+                    veriyiGonder(note, base64Files);
                 }
             };
 
@@ -254,14 +234,12 @@
         if (statusText) status.innerText = statusText;
     }
 
-    function veriyiGonder(note, images, duration, effect) {
+    function veriyiGonder(note, images) {
         const status = document.getElementById('status');
 
         db.ref('displayData').set({
             note: note,
             images: images,
-            duration: duration,
-            effect: effect,
             timestamp: Date.now()
         }, (error) => {
             if (error) {
