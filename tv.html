@@ -1,276 +1,246 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dijital Pano - TV Ekranı</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      background-color: #0d0d0d;
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      overflow: hidden;
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pano Slayt Ekranı</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #loginBox {
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+            z-index: 10;
+        }
+        input[type="password"] {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #222;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 15px;
+            width: 80%;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        #mainContent {
+            display: none;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
 
-    /* Ambient Blur Arka Plan */
-    #blur-bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-size: cover;
-      background-position: center;
-      filter: blur(25px) brightness(0.4);
-      transform: scale(1.1);
-      transition: background-image 1s ease-in-out;
-      z-index: 1;
-    }
+        #noteDisplay {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px 25px;
+            border-radius: 10px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+            max-width: 90%;
+            word-wrap: break-word;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-    /* Slayt Konteynırı */
-    #slide-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 2;
-    }
+        /* ÇİFT KATMANLI YUMUŞAK GEÇİŞ EFEKTİ */
+        .media-element {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            object-position: center;
+            border: none;
+            margin: 0;
+            padding: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out; /* 1 saniyelik kaybolma/belirme geçişi */
+            pointer-events: none;
+        }
 
-    .slide-img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      position: absolute;
-      opacity: 0;
-      transition: opacity 1s ease-in-out;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .slide-img.active {
-      opacity: 1;
-    }
-
-    /* GEÇİŞ EFEKTLERİ */
-    /* Fade */
-    .effect-fade .slide-img { transition: opacity 1s ease-in-out; }
-
-    /* Slide (Sağdan Kayma) */
-    .effect-slide .slide-img {
-      transform: translateX(100%);
-      transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
-    }
-    .effect-slide .slide-img.active {
-      transform: translateX(0);
-    }
-
-    /* Zoom (Büyüyerek Gelme) */
-    .effect-zoom .slide-img {
-      transform: scale(0.7);
-      transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
-    }
-    .effect-zoom .slide-img.active {
-      transform: scale(1);
-    }
-
-    /* Ken Burns (Yavaş Yakınlaşma Hareketi) */
-    .effect-kenburns .slide-img.active {
-      animation: kenburnsAnimation 10s infinite alternate ease-in-out;
-    }
-    @keyframes kenburnsAnimation {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.08); }
-    }
-
-    /* ÜST BİLGİ PANELİ (Saat & Hava Durumu) */
-    #widget-bar {
-      position: absolute;
-      top: 25px;
-      right: 35px;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(10px);
-      padding: 10px 22px;
-      border-radius: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
-
-    #clock-box {
-      text-align: right;
-    }
-    #clock {
-      font-size: 2.2rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      line-height: 1;
-    }
-    #date {
-      font-size: 0.85rem;
-      color: #ccc;
-      margin-top: 4px;
-    }
-
-    #weather-box {
-      font-size: 1.2rem;
-      font-weight: 600;
-      border-left: 1px solid rgba(255, 255, 255, 0.2);
-      padding-left: 15px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* ALT NOT / DUYURU BANDI */
-    #ticker-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(8px);
-      padding: 12px 0;
-      z-index: 10;
-      overflow: hidden;
-      white-space: nowrap;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    #ticker-text {
-      display: inline-block;
-      padding-left: 100%;
-      font-size: 1.2rem;
-      font-weight: 500;
-      color: #ffd700;
-      animation: ticker 25s linear infinite;
-    }
-    @keyframes ticker {
-      0% { transform: translate3d(0, 0, 0); }
-      100% { transform: translate3d(-100%, 0, 0); }
-    }
-  </style>
+        .media-element.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Arka Plan Blur Efekti -->
-  <div id="blur-bg"></div>
-
-  <!-- Slayt Görselleri -->
-  <div id="slide-container" class="effect-fade">
-    <img id="img1" class="slide-img active" src="" alt="Slayt 1">
-    <img id="img2" class="slide-img" src="" alt="Slayt 2">
-  </div>
-
-  <!-- Widgetlar -->
-  <div id="widget-bar">
-    <div id="clock-box">
-      <div id="clock">00:00</div>
-      <div id="date">11 Ağustos Salı</div>
+    <div id="loginBox">
+        <h2>Pano Ekranı Girişi</h2>
+        <input type="password" id="pinInput" placeholder="PIN Şifrenizi Girin">
+        <br>
+        <button onclick="girisYap()">Giriş Yap</button>
+        <p id="errorMsg" style="color: #ff5252; margin-top: 10px; display: none;">Hatalı Şifre!</p>
     </div>
-    <div id="weather-box">
-      <span id="weather-icon">☀️</span>
-      <span id="weather-temp">28°C</span>
+
+    <div id="mainContent">
+        <div id="noteDisplay">Pano Hazır...</div>
+        <!-- Çift Resim Katmanı (Fotoğraftan fotoğrafa yumuşak erime için) -->
+        <img id="imageDisplayA" class="media-element" src="" alt="Resim A">
+        <img id="imageDisplayB" class="media-element" src="" alt="Resim B">
+        <!-- Video Katmanı -->
+        <video id="videoDisplay" class="media-element" autoplay muted playsinline></video>
     </div>
-  </div>
 
-  <!-- Alt Not Bandı -->
-  <div id="ticker-bar" style="display: none;">
-    <div id="ticker-text">Kişisel Hatırlatma veya Not Alanı</div>
-  </div>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  <script>
-    // ÖRNEK AYARLAR VE VERİLER (Admin panelinden senkronize edilecek yapı)
-    let config = {
-      interval: 5000,        // ms cinsinden slayt süresi
-      effect: 'fade',        // fade, slide, zoom, kenburns
-      shuffle: false,        // Rastgele sıra
-      tickerText: '',        // Alt yazı
-      images: [
-        'https://picsum.photos/id/1018/1920/1080',
-        'https://picsum.photos/id/1015/1920/1080',
-        'https://picsum.photos/id/1019/1920/1080'
-      ]
-    };
+    <script>
+        const KORUMA_SIFRESI = "2525";
 
-    let currentIndex = 0;
-    let activeImgId = 'img1';
-    let slideTimer = null;
+        const firebaseConfig = {
+          apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
+          authDomain: "deneme-fe19a.firebaseapp.com",
+          databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
+          projectId: "deneme-fe19a"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    const img1El = document.getElementById('img1');
-    const img2El = document.getElementById('img2');
-    const blurBg = document.getElementById('blur-bg');
-    const container = document.getElementById('slide-container');
+        let mediaList = [];
+        let currentIndex = 0;
+        let slideTimeout = null;
+        let activeImageLayer = 'A'; // Hangi resim katmanının aktif olduğunu takip eder
 
-    // Slaytı Başlat
-    function initSlideshow() {
-      if (!config.images.length) return;
-      
-      // İlk görseli yükle
-      img1El.src = config.images[0];
-      blurBg.style.backgroundImage = `url('${config.images[0]}')`;
-      
-      restartTimer();
-    }
+        function girisYap() {
+            const girilen = document.getElementById('pinInput').value;
+            if (girilen === KORUMA_SIFRESI) {
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                
+                var elem = document.documentElement;
+                if (elem.requestFullscreen) { elem.requestFullscreen(); }
+                else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
+                else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
 
-    function nextSlide() {
-      if (config.images.length <= 1) return;
+                panoyuBaslat();
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        }
 
-      if (config.shuffle) {
-        currentIndex = Math.floor(Math.random() * config.images.length);
-      } else {
-        currentIndex = (currentIndex + 1) % config.images.length;
-      }
+        function panoyuBaslat() {
+            db.ref('displayData').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const noteElem = document.getElementById('noteDisplay');
+                    if (data.note) {
+                        noteElem.innerText = data.note;
+                        noteElem.style.display = 'block';
+                    } else {
+                        noteElem.style.display = 'none';
+                    }
 
-      const nextSrc = config.images[currentIndex];
-      const currentEl = activeImgId === 'img1' ? img1El : img2El;
-      const nextEl = activeImgId === 'img1' ? img2El : img1El;
+                    if (data.images && data.images.length > 0) {
+                        mediaList = data.images;
+                        currentIndex = 0;
+                        baslatSlayt();
+                    } else {
+                        mediaList = [];
+                        if (slideTimeout) clearTimeout(slideTimeout);
+                        document.getElementById('imageDisplayA').classList.remove('active');
+                        document.getElementById('imageDisplayB').classList.remove('active');
+                        document.getElementById('videoDisplay').classList.remove('active');
+                    }
+                }
+            });
+        }
 
-      nextEl.src = nextSrc;
-      blurBg.style.backgroundImage = `url('${nextSrc}')`;
+        function baslatSlayt() {
+            if (slideTimeout) clearTimeout(slideTimeout);
+            
+            const imgElemA = document.getElementById('imageDisplayA');
+            const imgElemB = document.getElementById('imageDisplayB');
+            const videoElem = document.getElementById('videoDisplay');
 
-      nextEl.classList.add('active');
-      currentEl.classList.remove('active');
+            function gosterNextMedya() {
+                if (mediaList.length === 0) return;
 
-      activeImgId = activeImgId === 'img1' ? 'img2' : 'img1';
-    }
+                const currentItem = mediaList[currentIndex];
+                currentIndex = (currentIndex + 1) % mediaList.length;
 
-    function restartTimer() {
-      if (slideTimer) clearInterval(slideTimer);
-      slideTimer = setInterval(nextSlide, config.interval);
-    }
+                if (currentItem.startsWith('data:video')) {
+                    // Videoya geçerken fotoğrafları yumuşakça kapat
+                    imgElemA.classList.remove('active');
+                    imgElemB.classList.remove('active');
 
-    function updateEffect(effectName) {
-      container.className = '';
-      container.classList.add(`effect-${effectName}`);
-    }
+                    videoElem.src = currentItem;
+                    videoElem.onloadeddata = () => {
+                        videoElem.classList.add('active');
+                        videoElem.play().catch(e => console.log(e));
+                    };
 
-    // Saat ve Tarih Güncelleme
-    function updateClock() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('clock').innerText = `${hours}:${minutes}`;
+                    videoElem.onended = () => {
+                        gosterNextMedya();
+                    };
+                } else {
+                    // Fotoğrafa geçerken videoyu durdurup kapat
+                    videoElem.pause();
+                    videoElem.classList.remove('active');
 
-      const options = { day: 'numeric', month: 'long', weekday: 'long' };
-      document.getElementById('date').innerText = now.toLocaleDateString('tr-TR', options);
-    }
+                    // Çift katman kullanımı (A ve B arası yumuşak geçiş)
+                    if (activeImageLayer === 'A') {
+                        imgElemB.src = currentItem;
+                        imgElemB.onload = () => {
+                            imgElemB.classList.add('active');
+                            imgElemA.classList.remove('active');
+                            activeImageLayer = 'B';
+                        };
+                    } else {
+                        imgElemA.src = currentItem;
+                        imgElemA.onload = () => {
+                            imgElemA.classList.add('active');
+                            imgElemB.classList.remove('active');
+                            activeImageLayer = 'A';
+                        };
+                    }
 
-    setInterval(updateClock, 1000);
-    updateClock();
-    initSlideshow();
-  </script>
+                    // Fotoğrafların ekranda kalma süresi: 5 saniye (5000ms)
+                    slideTimeout = setTimeout(gosterNextMedya, 5000);
+                }
+            }
+
+            gosterNextMedya();
+        }
+    </script>
 </body>
 </html>
