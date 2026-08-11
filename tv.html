@@ -64,7 +64,7 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 5;
+            z-index: 10;
             font-size: 2.5rem;
             font-weight: bold;
             text-align: center;
@@ -78,7 +78,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* GEÇİŞ EFEKTİ AYARLARI */
+        /* ÇİFT KATMANLI YUMUŞAK GEÇİŞ EFEKTİ */
         .media-element {
             position: absolute;
             top: 0;
@@ -91,7 +91,7 @@
             margin: 0;
             padding: 0;
             opacity: 0;
-            transition: opacity 0.8s ease-in-out; /* 0.8 saniyelik yumuşak geçiş */
+            transition: opacity 1s ease-in-out; /* 1 saniyelik kaybolma/belirme geçişi */
             pointer-events: none;
         }
 
@@ -113,7 +113,10 @@
 
     <div id="mainContent">
         <div id="noteDisplay">Pano Hazır...</div>
-        <img id="imageDisplay" class="media-element" src="" alt="Resim">
+        <!-- Çift Resim Katmanı (Fotoğraftan fotoğrafa yumuşak erime için) -->
+        <img id="imageDisplayA" class="media-element" src="" alt="Resim A">
+        <img id="imageDisplayB" class="media-element" src="" alt="Resim B">
+        <!-- Video Katmanı -->
         <video id="videoDisplay" class="media-element" autoplay muted playsinline></video>
     </div>
 
@@ -136,6 +139,7 @@
         let mediaList = [];
         let currentIndex = 0;
         let slideTimeout = null;
+        let activeImageLayer = 'A'; // Hangi resim katmanının aktif olduğunu takip eder
 
         function girisYap() {
             const girilen = document.getElementById('pinInput').value;
@@ -173,7 +177,8 @@
                     } else {
                         mediaList = [];
                         if (slideTimeout) clearTimeout(slideTimeout);
-                        document.getElementById('imageDisplay').classList.remove('active');
+                        document.getElementById('imageDisplayA').classList.remove('active');
+                        document.getElementById('imageDisplayB').classList.remove('active');
                         document.getElementById('videoDisplay').classList.remove('active');
                     }
                 }
@@ -182,7 +187,9 @@
 
         function baslatSlayt() {
             if (slideTimeout) clearTimeout(slideTimeout);
-            const imgElem = document.getElementById('imageDisplay');
+            
+            const imgElemA = document.getElementById('imageDisplayA');
+            const imgElemB = document.getElementById('imageDisplayB');
             const videoElem = document.getElementById('videoDisplay');
 
             function gosterNextMedya() {
@@ -192,8 +199,9 @@
                 currentIndex = (currentIndex + 1) % mediaList.length;
 
                 if (currentItem.startsWith('data:video')) {
-                    // Videoya geçerken resmi yumuşakça gizle
-                    imgElem.classList.remove('active');
+                    // Videoya geçerken fotoğrafları yumuşakça kapat
+                    imgElemA.classList.remove('active');
+                    imgElemB.classList.remove('active');
 
                     videoElem.src = currentItem;
                     videoElem.onloadeddata = () => {
@@ -205,16 +213,28 @@
                         gosterNextMedya();
                     };
                 } else {
-                    // Fotoğrafa geçerken videoyu durdur ve yumuşakça gizle
+                    // Fotoğrafa geçerken videoyu durdurup kapat
                     videoElem.pause();
                     videoElem.classList.remove('active');
 
-                    imgElem.src = currentItem;
-                    imgElem.onload = () => {
-                        imgElem.classList.add('active');
-                    };
+                    // Çift katman kullanımı (A ve B arası yumuşak geçiş)
+                    if (activeImageLayer === 'A') {
+                        imgElemB.src = currentItem;
+                        imgElemB.onload = () => {
+                            imgElemB.classList.add('active');
+                            imgElemA.classList.remove('active');
+                            activeImageLayer = 'B';
+                        };
+                    } else {
+                        imgElemA.src = currentItem;
+                        imgElemA.onload = () => {
+                            imgElemA.classList.add('active');
+                            imgElemB.classList.remove('active');
+                            activeImageLayer = 'A';
+                        };
+                    }
 
-                    // Fotoğraflar ekranda 5 saniye kalır
+                    // Fotoğrafların ekranda kalma süresi: 5 saniye (5000ms)
                     slideTimeout = setTimeout(gosterNextMedya, 5000);
                 }
             }
