@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pano Slayt Ekranı</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
             background-color: #000;
             color: #fff;
@@ -50,7 +48,6 @@
             cursor: pointer;
         }
         
-        /* PANO ANA EKRANI (TAM EKRAN) */
         #mainContent {
             display: none;
             position: relative;
@@ -62,7 +59,6 @@
             background-color: #000;
         }
 
-        /* NOT EKRANI (Görsel Üzerinde Şık Katman) */
         #noteDisplay {
             position: absolute;
             top: 20px;
@@ -82,11 +78,10 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* FOTOĞRAF EKRANI (FULL RESOLUTION / COVER) */
-        #imageDisplay {
+        #imageDisplay, #videoDisplay {
             width: 100vw;
             height: 100vh;
-            object-fit: cover; /* Resmi ekrana boşluksuz, tam genişlikte sıfıra sıfır yayar */
+            object-fit: cover;
             object-position: center;
             display: none;
             border: none;
@@ -97,7 +92,6 @@
 </head>
 <body>
 
-    <!-- Şifre Giriş Kutusu -->
     <div id="loginBox">
         <h2>Pano Ekranı Girişi</h2>
         <input type="password" id="pinInput" placeholder="PIN Şifrenizi Girin">
@@ -106,10 +100,10 @@
         <p id="errorMsg" style="color: #ff5252; margin-top: 10px; display: none;">Hatalı Şifre!</p>
     </div>
 
-    <!-- Pano İçeriği -->
     <div id="mainContent">
         <div id="noteDisplay">Pano Hazır...</div>
         <img id="imageDisplay" src="" alt="Resim">
+        <video id="videoDisplay" autoplay muted playsinline></video>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -128,9 +122,9 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let imageList = [];
+        let mediaList = [];
         let currentIndex = 0;
-        let slideInterval = null;
+        let slideTimeout = null;
 
         function girisYap() {
             const girilen = document.getElementById('pinInput').value;
@@ -138,15 +132,10 @@
                 document.getElementById('loginBox').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
                 
-                // Tarayıcıyı Otomatik Tam Ekran Yapma Kodu
                 var elem = document.documentElement;
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen();
-                } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
-                } else if (elem.msRequestFullscreen) {
-                    elem.msRequestFullscreen();
-                }
+                if (elem.requestFullscreen) { elem.requestFullscreen(); }
+                else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
+                else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
 
                 panoyuBaslat();
             } else {
@@ -159,7 +148,6 @@
                 const data = snapshot.val();
                 if (data) {
                     const noteElem = document.getElementById('noteDisplay');
-                    
                     if (data.note) {
                         noteElem.innerText = data.note;
                         noteElem.style.display = 'block';
@@ -168,34 +156,53 @@
                     }
 
                     if (data.images && data.images.length > 0) {
-                        imageList = data.images;
+                        mediaList = data.images;
                         currentIndex = 0;
                         baslatSlayt();
                     } else {
-                        imageList = [];
-                        if (slideInterval) clearInterval(slideInterval);
+                        mediaList = [];
+                        if (slideTimeout) clearTimeout(slideTimeout);
                         document.getElementById('imageDisplay').style.display = 'none';
+                        document.getElementById('videoDisplay').style.display = 'none';
                     }
                 }
             });
         }
 
         function baslatSlayt() {
-            if (slideInterval) clearInterval(slideInterval);
+            if (slideTimeout) clearTimeout(slideTimeout);
             const imgElem = document.getElementById('imageDisplay');
-            
-            function gosterNextResim() {
-                if (imageList.length === 0) return;
-                imgElem.src = imageList[currentIndex];
-                imgElem.style.display = 'block';
-                currentIndex = (currentIndex + 1) % imageList.length;
+            const videoElem = document.getElementById('videoDisplay');
+
+            function gosterNextMedya() {
+                if (mediaList.length === 0) return;
+
+                const currentItem = mediaList[currentIndex];
+                currentIndex = (currentIndex + 1) % mediaList.length;
+
+                // İçerik Video mu Resim mi kontrol et
+                if (currentItem.startsWith('data:video')) {
+                    imgElem.style.display = 'none';
+                    videoElem.src = currentItem;
+                    videoElem.style.display = 'block';
+                    videoElem.play().catch(e => console.log(e));
+
+                    // Video bittiğinde bir sonraki medyaya geç
+                    videoElem.onended = () => {
+                        gosterNextMedya();
+                    };
+                } else {
+                    videoElem.pause();
+                    videoElem.style.display = 'none';
+                    imgElem.src = currentItem;
+                    imgElem.style.display = 'block';
+
+                    // Fotoğraflar ekranda 5 saniye kalır
+                    slideTimeout = setTimeout(gosterNextMedya, 5000);
+                }
             }
 
-            gosterNextResim();
-
-            if (imageList.length > 1) {
-                slideInterval = setInterval(gosterNextResim, 4000);
-            }
+            gosterNextMedya();
         }
     </script>
 </body>
