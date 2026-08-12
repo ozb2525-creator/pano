@@ -43,7 +43,7 @@
             object-fit: cover;
             filter: blur(25px) brightness(0.5);
             -webkit-filter: blur(25px) brightness(0.5);
-            transform: scale(1.1); /* Kenar boşluklarını engellemek için hafif büyütme */
+            transform: scale(1.1);
             z-index: 1;
             display: none;
         }
@@ -109,17 +109,36 @@
             font-size: 14px;
         }
 
-        #fsBtn {
+        /* Sağ Üst Kontrol Alanı (Şarj & Tam Ekran) */
+        #topRightControls {
             position: absolute;
             top: 10px;
             right: 10px;
             z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #batteryBox {
             background: rgba(0, 0, 0, 0.7);
             color: #fff;
             border: 1px solid #666;
             padding: 10px 15px;
             border-radius: 6px;
             font-size: 14px;
+            font-weight: bold;
+            display: none; /* Şarj bilgisi alınınca açılır */
+        }
+
+        #fsBtn {
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: 1px solid #666;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
         }
 
         #noteBar {
@@ -159,7 +178,10 @@
 
 <!-- MEDYA EKRANI -->
 <div id="mediaContainer" style="display:none;">
-    <button id="fsBtn" onclick="tamEkranYap()">⛶ Tam Ekran</button>
+    <div id="topRightControls">
+        <div id="batteryBox">🔋 %--</div>
+        <button id="fsBtn" onclick="tamEkranYap()">⛶ Tam Ekran</button>
+    </div>
     
     <!-- Arka Plan Bulanıklığı Katmanı -->
     <img id="bgDisplay" class="bg-blur" alt="Bulanık Arka Plan">
@@ -206,6 +228,9 @@
             // Otomatik tam ekrana geç
             tamEkranYap();
             
+            // Batarya takibini başlat
+            bataryaBilgisiBaslat();
+
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
             
@@ -225,6 +250,34 @@
             elem.mozRequestFullScreen();
         } else if (elem.msRequestFullscreen) {
             elem.msRequestFullscreen();
+        }
+    }
+
+    // Tabletin şarj seviyesini canlı takip eden fonksiyon
+    function bataryaBilgisiBaslat() {
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(function(battery) {
+                function bataryaGuncelle() {
+                    var seviye = Math.round(battery.level * 100);
+                    var sarjdaMi = battery.charging;
+                    var batteryElem = document.getElementById('batteryBox');
+                    
+                    if (batteryElem) {
+                        var simge = sarjdaMi ? "⚡" : "🔋";
+                        batteryElem.innerText = simge + " %" + seviye;
+                        batteryElem.style.display = "block";
+                    }
+                }
+
+                // İlk yüklemede güncelle
+                bataryaGuncelle();
+
+                // Şarj seviyesi veya kablo durumu değiştikçe güncelle
+                battery.addEventListener('levelchange', bataryaGuncelle);
+                battery.addEventListener('chargingchange', bataryaGuncelle);
+            }).catch(function(err) {
+                console.log("Batarya bilgisi alınamadı:", err);
+            });
         }
     }
 
@@ -298,7 +351,6 @@
             videoDisplay.pause();
             videoDisplay.style.display = "none";
 
-            // Hem öndeki hem arka plandaki görsele resim yolunu atıyoruz
             bgDisplay.src = currentMedia;
             bgDisplay.style.display = "block";
 
