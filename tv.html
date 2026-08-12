@@ -3,244 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pano Slayt Ekranı</title>
+    <title>Pano TV Ekranı</title>
     <style>
         * { box-sizing: border-box; }
-        body {
-            background-color: #000;
-            color: #fff;
+        body, html {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #mediaContainer {
+            position: relative;
             width: 100vw;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-        }
-        #loginBox {
-            background: #1e1e1e;
-            padding: 30px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 0 15px rgba(255,255,255,0.1);
-            z-index: 10;
-        }
-        input[type="password"] {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 6px;
-            border: 1px solid #444;
-            background: #222;
-            color: #fff;
-            text-align: center;
-            margin-bottom: 15px;
-            width: 80%;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background: #4CAF50;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        
-        #mainContent {
-            display: none;
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
         }
 
-        #noteDisplay {
+        .media-item {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
+        .media-item.active {
+            display: block;
+        }
+
+        /* ALT NOT BANT STİLİ */
+        #noteBar {
             position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            font-size: 2.5rem;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 15px 25px;
+            font-size: 24px;
             font-weight: bold;
             text-align: center;
-            color: #ffffff;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 12px 25px;
-            border-radius: 10px;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
-            max-width: 90%;
-            word-wrap: break-word;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-sizing: border-box;
+            z-index: 10;
+            display: none;
+            border-top: 2px solid #4CAF50;
         }
 
-        /* ÇİFT KATMANLI YUMUŞAK GEÇİŞ EFEKTİ */
-        .media-element {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            object-fit: cover;
-            object-position: center;
-            border: none;
-            margin: 0;
-            padding: 0;
-            opacity: 0;
-            transition: opacity 1s ease-in-out; /* 1 saniyelik kaybolma/belirme geçişi */
-            pointer-events: none;
-        }
-
-        .media-element.active {
-            opacity: 1;
-            pointer-events: auto;
+        #emptyMessage {
+            font-size: 28px;
+            color: #888;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <div id="loginBox">
-        <h2>Pano Ekranı Girişi</h2>
-        <input type="password" id="pinInput" placeholder="PIN Şifrenizi Girin">
-        <br>
-        <button onclick="girisYap()">Giriş Yap</button>
-        <p id="errorMsg" style="color: #ff5252; margin-top: 10px; display: none;">Hatalı Şifre!</p>
-    </div>
+<div id="mediaContainer">
+    <div id="emptyMessage">Yansıtılan içerik bekleniyor...</div>
+    <img id="imgDisplay" class="media-item" alt="Ekran Görseli">
+    <video id="videoDisplay" class="media-item" autoplay muted playsinline></video>
+    <div id="noteBar"></div>
+</div>
 
-    <div id="mainContent">
-        <div id="noteDisplay">Pano Hazır...</div>
-        <!-- Çift Resim Katmanı (Fotoğraftan fotoğrafa yumuşak erime için) -->
-        <img id="imageDisplayA" class="media-element" src="" alt="Resim A">
-        <img id="imageDisplayB" class="media-element" src="" alt="Resim B">
-        <!-- Video Katmanı -->
-        <video id="videoDisplay" class="media-element" autoplay muted playsinline></video>
-    </div>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
+      authDomain: "deneme-fe19a.firebaseapp.com",
+      databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
+      projectId: "deneme-fe19a"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    <script>
-        const KORUMA_SIFRESI = "2525";
+    const imgDisplay = document.getElementById('imgDisplay');
+    const videoDisplay = document.getElementById('videoDisplay');
+    const emptyMessage = document.getElementById('emptyMessage');
+    const noteBar = document.getElementById('noteBar');
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
-          authDomain: "deneme-fe19a.firebaseapp.com",
-          databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
-          projectId: "deneme-fe19a"
-        };
+    let currentImages = [];
+    let currentIndex = 0;
+    let slideTimer = null;
+    const DEFAULT_IMAGE_DURATION = 5000; // Fotoğraflar için varsayılan 5 saniye
+
+    // Firebase Verilerini Dinle
+    db.ref('displayData').on('value', (snapshot) => {
+        const data = snapshot.val();
         
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        if (!data) {
+            ekraniTemizle();
+            return;
+        }
 
-        let mediaList = [];
-        let currentIndex = 0;
-        let slideTimeout = null;
-        let activeImageLayer = 'A'; // Hangi resim katmanının aktif olduğunu takip eder
+        // Ekran Notunu Göster
+        if (data.note && data.note.trim() !== "") {
+            noteBar.innerText = data.note;
+            noteBar.style.display = "block";
+        } else {
+            noteBar.style.display = "none";
+        }
 
-        function girisYap() {
-            const girilen = document.getElementById('pinInput').value;
-            if (girilen === KORUMA_SIFRESI) {
-                document.getElementById('loginBox').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                
-                var elem = document.documentElement;
-                if (elem.requestFullscreen) { elem.requestFullscreen(); }
-                else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
-                else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); }
-
-                panoyuBaslat();
+        // Medyaları Güncelle
+        if (data.images && data.images.length > 0) {
+            currentImages = data.images;
+            currentIndex = 0;
+            emptyMessage.style.display = "none";
+            medyaOynat();
+        } else {
+            if (!data.note || data.note.trim() === "") {
+                ekraniTemizle();
             } else {
-                document.getElementById('errorMsg').style.display = 'block';
+                imgDisplay.style.display = "none";
+                videoDisplay.style.display = "none";
+                emptyMessage.style.display = "none";
             }
         }
+    });
 
-        function panoyuBaslat() {
-            db.ref('displayData').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    const noteElem = document.getElementById('noteDisplay');
-                    if (data.note) {
-                        noteElem.innerText = data.note;
-                        noteElem.style.display = 'block';
-                    } else {
-                        noteElem.style.display = 'none';
-                    }
+    function medyaOynat() {
+        if (slideTimer) clearTimeout(slideTimer);
 
-                    if (data.images && data.images.length > 0) {
-                        mediaList = data.images;
-                        currentIndex = 0;
-                        baslatSlayt();
-                    } else {
-                        mediaList = [];
-                        if (slideTimeout) clearTimeout(slideTimeout);
-                        document.getElementById('imageDisplayA').classList.remove('active');
-                        document.getElementById('imageDisplayB').classList.remove('active');
-                        document.getElementById('videoDisplay').classList.remove('active');
-                    }
-                }
-            });
-        }
+        if (currentImages.length === 0) return;
 
-        function baslatSlayt() {
-            if (slideTimeout) clearTimeout(slideTimeout);
-            
-            const imgElemA = document.getElementById('imageDisplayA');
-            const imgElemB = document.getElementById('imageDisplayB');
-            const videoElem = document.getElementById('videoDisplay');
+        const currentMedia = currentImages[currentIndex];
+        const isVideo = currentMedia.startsWith('data:video');
 
-            function gosterNextMedya() {
-                if (mediaList.length === 0) return;
+        if (isVideo) {
+            imgDisplay.style.display = "none";
+            videoDisplay.src = currentMedia;
+            videoDisplay.style.display = "block";
 
-                const currentItem = mediaList[currentIndex];
-                currentIndex = (currentIndex + 1) % mediaList.length;
-
-                if (currentItem.startsWith('data:video')) {
-                    // Videoya geçerken fotoğrafları yumuşakça kapat
-                    imgElemA.classList.remove('active');
-                    imgElemB.classList.remove('active');
-
-                    videoElem.src = currentItem;
-                    videoElem.onloadeddata = () => {
-                        videoElem.classList.add('active');
-                        videoElem.play().catch(e => console.log(e));
-                    };
-
-                    videoElem.onended = () => {
-                        gosterNextMedya();
-                    };
-                } else {
-                    // Fotoğrafa geçerken videoyu durdurup kapat
-                    videoElem.pause();
-                    videoElem.classList.remove('active');
-
-                    // Çift katman kullanımı (A ve B arası yumuşak geçiş)
-                    if (activeImageLayer === 'A') {
-                        imgElemB.src = currentItem;
-                        imgElemB.onload = () => {
-                            imgElemB.classList.add('active');
-                            imgElemA.classList.remove('active');
-                            activeImageLayer = 'B';
-                        };
-                    } else {
-                        imgElemA.src = currentItem;
-                        imgElemA.onload = () => {
-                            imgElemA.classList.add('active');
-                            imgElemB.classList.remove('active');
-                            activeImageLayer = 'A';
-                        };
-                    }
-
-                    // Fotoğrafların ekranda kalma süresi: 5 saniye (5000ms)
-                    slideTimeout = setTimeout(gosterNextMedya, 5000);
-                }
+            // Sadece TEK VİDEO seçilmişse döngüye sok (loop)
+            if (currentImages.length === 1) {
+                videoDisplay.loop = true;
+                videoDisplay.play().catch(e => console.log("Oynatma hatası:", e));
+            } else {
+                // Birden fazla medya varsa video bitince sıradakine geç
+                videoDisplay.loop = false;
+                videoDisplay.play().catch(e => console.log("Oynatma hatası:", e));
+                
+                videoDisplay.onended = () => {
+                    sonrakiMedyayaGec();
+                };
             }
+        } else {
+            // Görsel Oynatma
+            videoDisplay.pause();
+            videoDisplay.style.display = "none";
+            imgDisplay.src = currentMedia;
+            imgDisplay.style.display = "block";
 
-            gosterNextMedya();
+            // Birden fazla resim/medya varsa belirlenen süre sonunda sıradakine geç
+            if (currentImages.length > 1) {
+                slideTimer = setTimeout(() => {
+                    sonrakiMedyayaGec();
+                }, DEFAULT_IMAGE_DURATION);
+            }
         }
-    </script>
+    }
+
+    function sonrakiMedyayaGec() {
+        currentIndex = (currentIndex + 1) % currentImages.length;
+        medyaOynat();
+    }
+
+    function ekraniTemizle() {
+        imgDisplay.style.display = "none";
+        videoDisplay.style.display = "none";
+        noteBar.style.display = "none";
+        emptyMessage.style.display = "block";
+        if (slideTimer) clearTimeout(slideTimer);
+    }
+</script>
+
 </body>
 </html>
