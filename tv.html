@@ -2,51 +2,91 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Android 4.4.2 KitKat WebView / Chrome Tam Ekran Optimizasyonu -->
+    <meta name="viewport" content="width=1280, height=800, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Pano TV Ekranı</title>
     <style>
-        * { box-sizing: border-box; }
-        body, html {
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
             margin: 0;
             padding: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             background-color: #000;
             color: #fff;
             font-family: Arial, sans-serif;
             overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            position: fixed; /* KitKat kaydırma hatalarını engeller */
         }
 
-        /* ŞİFRE KUTUSU STİLİ */
+        /* 1280x800 EKRAN TAMPON ALANI */
+        #mediaContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-box-pack: center;
+            -webkit-justify-content: center;
+            justify-content: center;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            align-items: center;
+            background-color: #000;
+        }
+
+        /* Android 4.4 Uyumlu Görsel ve Video Katmanı */
+        .media-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+            /* Eski Android sürümleri için object-fit desteği ve yedekleme */
+            object-fit: cover;
+            -webkit-object-fit: cover;
+            display: none;
+            border: none;
+            outline: none;
+        }
+
+        /* ŞİFRE KUTUSU (Android 4.4 İçin Sadeleştirilmiş) */
         #loginBox {
-            background-color: #1e1e1e;
-            padding: 30px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+            position: relative;
             z-index: 200;
-            max-width: 350px;
-            width: 90%;
+            background-color: #1e1e1e;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            width: 320px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.9);
         }
 
         #loginBox h3 {
             margin-top: 0;
             color: #4CAF50;
+            font-size: 20px;
         }
 
         #pinInput {
             width: 100%;
             padding: 12px;
             border-radius: 6px;
-            border: 1px solid #333;
+            border: 1px solid #444;
             background-color: #2a2a2a;
             color: #fff;
-            font-size: 16px;
+            font-size: 18px;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         #loginBtn {
@@ -68,42 +108,17 @@
             font-size: 14px;
         }
 
-        /* EKRAN MEDYA ALANI */
-        #mediaContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            display: none; /* Şifre girilene kadar gizli */
-            justify-content: center;
-            align-items: center;
-            background-color: #000;
-        }
-
-        .media-item {
-            width: 100vw;
-            height: 100vh;
-            object-fit: contain;
-            display: none;
-        }
-
         #fsBtn {
             position: absolute;
             top: 10px;
             right: 10px;
             z-index: 100;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             color: #fff;
-            border: 1px solid #555;
-            padding: 8px 12px;
+            border: 1px solid #666;
+            padding: 10px 15px;
             border-radius: 6px;
-            cursor: pointer;
             font-size: 14px;
-            opacity: 0.3;
-            transition: opacity 0.3s;
-        }
-
-        #fsBtn:hover {
-            opacity: 1;
         }
 
         #noteBar {
@@ -111,28 +126,27 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.85);
             color: #fff;
-            padding: 15px 25px;
-            font-size: 28px;
+            padding: 12px 20px;
+            font-size: 24px;
             font-weight: bold;
             text-align: center;
-            box-sizing: border-box;
             z-index: 10;
             display: none;
             border-top: 3px solid #4CAF50;
         }
 
         #emptyMessage {
-            font-size: 28px;
-            color: #888;
+            font-size: 24px;
+            color: #777;
             text-align: center;
         }
     </style>
 </head>
 <body>
 
-<!-- 1. ŞİFRE GİRİŞ EKRANI -->
+<!-- 1. ŞİFRE GİRİŞİ -->
 <div id="loginBox">
     <h3>TV Ekranı Girişi</h3>
     <input type="password" id="pinInput" placeholder="Erişim Şifresi">
@@ -140,8 +154,8 @@
     <p id="loginError">Hatalı Şifre!</p>
 </div>
 
-<!-- 2. TV MEDYA EKRANI -->
-<div id="mediaContainer">
+<!-- 2. MEDYA ALANI -->
+<div id="mediaContainer" style="display:none;">
     <button id="fsBtn" onclick="tamEkranYap()">⛶ Tam Ekran</button>
     <div id="emptyMessage">Yansıtılan içerik bekleniyor...</div>
     <img id="imgDisplay" class="media-item" alt="Ekran Görseli">
@@ -153,35 +167,34 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-    const KORUMA_SIFRESI = "2525";
+    var KORUMA_SIFRESI = "2525";
 
-    const firebaseConfig = {
+    var firebaseConfig = {
       apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
       authDomain: "deneme-fe19a.firebaseapp.com",
       databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
       projectId: "deneme-fe19a"
     };
 
-    let db = null;
-    const imgDisplay = document.getElementById('imgDisplay');
-    const videoDisplay = document.getElementById('videoDisplay');
-    const emptyMessage = document.getElementById('emptyMessage');
-    const noteBar = document.getElementById('noteBar');
+    var db = null;
+    var imgDisplay = document.getElementById('imgDisplay');
+    var videoDisplay = document.getElementById('videoDisplay');
+    var emptyMessage = document.getElementById('emptyMessage');
+    var noteBar = document.getElementById('noteBar');
 
-    let currentImages = [];
-    let currentIndex = 0;
-    let slideTimer = null;
-    const DEFAULT_IMAGE_DURATION = 5000;
+    var currentImages = [];
+    var currentIndex = 0;
+    var slideTimer = null;
+    var DEFAULT_IMAGE_DURATION = 5000;
 
     function girisYap() {
-        const girilen = document.getElementById('pinInput').value;
-        const errorElem = document.getElementById('loginError');
+        var girilen = document.getElementById('pinInput').value;
+        var errorElem = document.getElementById('loginError');
 
         if (girilen === KORUMA_SIFRESI) {
             document.getElementById('loginBox').style.display = 'none';
             document.getElementById('mediaContainer').style.display = 'flex';
             
-            // Firebase Bağlantısını Başlat
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
             
@@ -193,19 +206,21 @@
     }
 
     function tamEkranYap() {
-        const elem = document.documentElement;
+        var elem = document.documentElement;
         if (elem.requestFullscreen) {
             elem.requestFullscreen();
         } else if (elem.webkitRequestFullscreen) {
             elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
         } else if (elem.msRequestFullscreen) {
             elem.msRequestFullscreen();
         }
     }
 
     function verileriDinle() {
-        db.ref('displayData').on('value', (snapshot) => {
-            const data = snapshot.val();
+        db.ref('displayData').on('value', function(snapshot) {
+            var data = snapshot.val();
             
             if (!data) {
                 ekraniTemizle();
@@ -241,8 +256,8 @@
 
         if (currentImages.length === 0) return;
 
-        const currentMedia = currentImages[currentIndex];
-        const isVideo = currentMedia.startsWith('data:video');
+        var currentMedia = currentImages[currentIndex];
+        var isVideo = currentMedia.indexOf('data:video') === 0;
 
         if (isVideo) {
             imgDisplay.style.display = "none";
@@ -255,14 +270,14 @@
                 videoDisplay.loop = true;
             } else {
                 videoDisplay.loop = false;
-                videoDisplay.onended = () => {
+                videoDisplay.onended = function() {
                     sonrakiMedyayaGec();
                 };
             }
 
-            const playPromise = videoDisplay.play();
+            var playPromise = videoDisplay.play();
             if (playPromise !== undefined) {
-                playPromise.catch(error => {
+                playPromise.catch(function(error) {
                     videoDisplay.muted = true;
                     videoDisplay.play();
                 });
@@ -274,7 +289,7 @@
             imgDisplay.style.display = "block";
 
             if (currentImages.length > 1) {
-                slideTimer = setTimeout(() => {
+                slideTimer = setTimeout(function() {
                     sonrakiMedyayaGec();
                 }, DEFAULT_IMAGE_DURATION);
             }
