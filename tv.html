@@ -2,7 +2,6 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <!-- Android 4.4.2 KitKat WebView / Chrome Tam Ekran Optimizasyonu -->
     <meta name="viewport" content="width=1280, height=800, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,10 +21,9 @@
             color: #fff;
             font-family: Arial, sans-serif;
             overflow: hidden;
-            position: fixed; /* KitKat kaydırma hatalarını engeller */
+            position: fixed;
         }
 
-        /* 1280x800 EKRAN TAMPON ALANI */
         #mediaContainer {
             position: absolute;
             top: 0;
@@ -44,22 +42,20 @@
             background-color: #000;
         }
 
-        /* Android 4.4 Uyumlu Görsel ve Video Katmanı */
+        /* FOTOĞRAFLARI KESMEDEN / AŞIRI BÜYÜTMEDEN EKRANA SIĞDIRAN KISIM */
         .media-item {
             position: absolute;
             top: 0;
             left: 0;
             width: 100% !important;
             height: 100% !important;
-            /* Eski Android sürümleri için object-fit desteği ve yedekleme */
-            object-fit: cover;
-            -webkit-object-fit: cover;
+            object-fit: contain; /* Fotoğrafın tamamını kesmeden ekrana sığdırır */
+            -webkit-object-fit: contain;
             display: none;
             border: none;
             outline: none;
         }
 
-        /* ŞİFRE KUTUSU (Android 4.4 İçin Sadeleştirilmiş) */
         #loginBox {
             position: relative;
             z-index: 200;
@@ -146,7 +142,6 @@
 </head>
 <body>
 
-<!-- 1. ŞİFRE GİRİŞİ -->
 <div id="loginBox">
     <h3>TV Ekranı Girişi</h3>
     <input type="password" id="pinInput" placeholder="Erişim Şifresi">
@@ -154,7 +149,6 @@
     <p id="loginError">Hatalı Şifre!</p>
 </div>
 
-<!-- 2. MEDYA ALANI -->
 <div id="mediaContainer" style="display:none;">
     <button id="fsBtn" onclick="tamEkranYap()">⛶ Tam Ekran</button>
     <div id="emptyMessage">Yansıtılan içerik bekleniyor...</div>
