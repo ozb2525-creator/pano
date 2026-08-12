@@ -128,7 +128,6 @@
             border-radius: 6px;
             font-size: 14px;
             font-weight: bold;
-            display: none; /* Şarj bilgisi alınınca açılır */
         }
 
         #fsBtn {
@@ -225,10 +224,7 @@
             document.getElementById('loginBox').style.display = 'none';
             document.getElementById('mediaContainer').style.display = 'flex';
             
-            // Otomatik tam ekrana geç
             tamEkranYap();
-            
-            // Batarya takibini başlat
             bataryaBilgisiBaslat();
 
             firebase.initializeApp(firebaseConfig);
@@ -253,31 +249,28 @@
         }
     }
 
-    // Tabletin şarj seviyesini canlı takip eden fonksiyon
     function bataryaBilgisiBaslat() {
+        var batteryElem = document.getElementById('batteryBox');
+        
         if ('getBattery' in navigator) {
             navigator.getBattery().then(function(battery) {
                 function bataryaGuncelle() {
                     var seviye = Math.round(battery.level * 100);
                     var sarjdaMi = battery.charging;
-                    var batteryElem = document.getElementById('batteryBox');
-                    
+                    var simge = sarjdaMi ? "⚡" : "🔋";
                     if (batteryElem) {
-                        var simge = sarjdaMi ? "⚡" : "🔋";
                         batteryElem.innerText = simge + " %" + seviye;
-                        batteryElem.style.display = "block";
                     }
                 }
 
-                // İlk yüklemede güncelle
                 bataryaGuncelle();
-
-                // Şarj seviyesi veya kablo durumu değiştikçe güncelle
                 battery.addEventListener('levelchange', bataryaGuncelle);
                 battery.addEventListener('chargingchange', bataryaGuncelle);
             }).catch(function(err) {
-                console.log("Batarya bilgisi alınamadı:", err);
+                if (batteryElem) batteryElem.innerText = "🔋 Desteklenmiyor";
             });
+        } else {
+            if (batteryElem) batteryElem.innerText = "🔋 Desteklenmiyor";
         }
     }
 
