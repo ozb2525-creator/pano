@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, height=800, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=1280, height=800, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Pano TV Ekranı</title>
@@ -28,32 +28,29 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             display: -webkit-box;
-            display: -webkit-flex;
             display: flex;
             -webkit-box-pack: center;
-            -webkit-justify-content: center;
             justify-content: center;
             -webkit-box-align: center;
-            -webkit-align-items: center;
             align-items: center;
             background-color: #000;
+            overflow: hidden;
         }
 
-        /* FOTOĞRAFLARI KESMEDEN / AŞIRI BÜYÜTMEDEN EKRANA SIĞDIRAN KISIM */
+        /* JS Tarafından Boyutlandırılacak Medyalar */
         .media-item {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: contain; /* Fotoğrafın tamamını kesmeden ekrana sığdırır */
-            -webkit-object-fit: contain;
             display: none;
             border: none;
             outline: none;
+            margin: auto;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
         }
 
         #loginBox {
@@ -187,7 +184,7 @@
 
         if (girilen === KORUMA_SIFRESI) {
             document.getElementById('loginBox').style.display = 'none';
-            document.getElementById('mediaContainer').style.display = 'flex';
+            document.getElementById('mediaContainer').style.display = 'block';
             
             firebase.initializeApp(firebaseConfig);
             db = firebase.database();
@@ -209,6 +206,26 @@
             elem.mozRequestFullScreen();
         } else if (elem.msRequestFullscreen) {
             elem.msRequestFullscreen();
+        }
+    }
+
+    // Android 4.4 için Resim / Video Boyutunu Hesaptayarak Ekran Katmanına Oturtma
+    function resimBoyutlandir(elem) {
+        var screenW = window.innerWidth || 1280;
+        var screenH = window.innerHeight || 800;
+        
+        var imgW = elem.naturalWidth || elem.videoWidth || screenW;
+        var imgH = elem.naturalHeight || elem.videoHeight || screenH;
+
+        var screenRatio = screenW / screenH;
+        var imgRatio = imgW / imgH;
+
+        if (imgRatio > screenRatio) {
+            elem.style.width = screenW + "px";
+            elem.style.height = "auto";
+        } else {
+            elem.style.height = screenH + "px";
+            elem.style.width = "auto";
         }
     }
 
@@ -258,6 +275,9 @@
             videoDisplay.style.display = "block";
             
             videoDisplay.src = currentMedia;
+            videoDisplay.onloadedmetadata = function() {
+                resimBoyutlandir(videoDisplay);
+            };
             videoDisplay.load();
 
             if (currentImages.length === 1) {
@@ -279,8 +299,12 @@
         } else {
             videoDisplay.pause();
             videoDisplay.style.display = "none";
+            
+            imgDisplay.onload = function() {
+                resimBoyutlandir(imgDisplay);
+                imgDisplay.style.display = "block";
+            };
             imgDisplay.src = currentMedia;
-            imgDisplay.style.display = "block";
 
             if (currentImages.length > 1) {
                 slideTimer = setTimeout(function() {
@@ -302,6 +326,11 @@
         emptyMessage.style.display = "block";
         if (slideTimer) clearTimeout(slideTimer);
     }
+
+    window.onresize = function() {
+        if (imgDisplay.style.display === "block") resimBoyutlandir(imgDisplay);
+        if (videoDisplay.style.display === "block") resimBoyutlandir(videoDisplay);
+    };
 </script>
 
 </body>
