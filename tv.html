@@ -9,8 +9,8 @@
         body, html {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background-color: #000;
             color: #fff;
             font-family: Arial, sans-serif;
@@ -20,42 +20,107 @@
             align-items: center;
         }
 
+        /* ŞİFRE KUTUSU STİLİ */
+        #loginBox {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+            z-index: 200;
+            max-width: 350px;
+            width: 90%;
+        }
+
+        #loginBox h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+
+        #pinInput {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background-color: #2a2a2a;
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        #loginBtn {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #loginError {
+            color: #ff5252;
+            display: none;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        /* EKRAN MEDYA ALANI */
         #mediaContainer {
             position: relative;
             width: 100vw;
             height: 100vh;
-            display: flex;
+            display: none; /* Şifre girilene kadar gizli */
             justify-content: center;
             align-items: center;
+            background-color: #000;
         }
 
         .media-item {
-            max-width: 100%;
-            max-height: 100%;
+            width: 100vw;
+            height: 100vh;
             object-fit: contain;
             display: none;
         }
 
-        .media-item.active {
-            display: block;
+        #fsBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.3;
+            transition: opacity 0.3s;
         }
 
-        /* ALT NOT BANT STİLİ */
+        #fsBtn:hover {
+            opacity: 1;
+        }
+
         #noteBar {
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: rgba(0, 0, 0, 0.75);
+            background-color: rgba(0, 0, 0, 0.8);
             color: #fff;
             padding: 15px 25px;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             text-align: center;
             box-sizing: border-box;
             z-index: 10;
             display: none;
-            border-top: 2px solid #4CAF50;
+            border-top: 3px solid #4CAF50;
         }
 
         #emptyMessage {
@@ -67,10 +132,20 @@
 </head>
 <body>
 
+<!-- 1. ŞİFRE GİRİŞ EKRANI -->
+<div id="loginBox">
+    <h3>TV Ekranı Girişi</h3>
+    <input type="password" id="pinInput" placeholder="Erişim Şifresi">
+    <button id="loginBtn" onclick="girisYap()">Yayını Başlat</button>
+    <p id="loginError">Hatalı Şifre!</p>
+</div>
+
+<!-- 2. TV MEDYA EKRANI -->
 <div id="mediaContainer">
+    <button id="fsBtn" onclick="tamEkranYap()">⛶ Tam Ekran</button>
     <div id="emptyMessage">Yansıtılan içerik bekleniyor...</div>
     <img id="imgDisplay" class="media-item" alt="Ekran Görseli">
-    <video id="videoDisplay" class="media-item" autoplay muted playsinline></video>
+    <video id="videoDisplay" class="media-item" autoplay muted playsinline preload="auto"></video>
     <div id="noteBar"></div>
 </div>
 
@@ -78,16 +153,16 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
+    const KORUMA_SIFRESI = "2525";
+
     const firebaseConfig = {
       apiKey: "AIzaSyBFI-d8Hg3Z-FmDoc6CKz5Regx3PMA11lo",
       authDomain: "deneme-fe19a.firebaseapp.com",
       databaseURL: "https://deneme-fe19a-default-rtdb.firebaseio.com",
       projectId: "deneme-fe19a"
     };
-    
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
+    let db = null;
     const imgDisplay = document.getElementById('imgDisplay');
     const videoDisplay = document.getElementById('videoDisplay');
     const emptyMessage = document.getElementById('emptyMessage');
@@ -96,41 +171,70 @@
     let currentImages = [];
     let currentIndex = 0;
     let slideTimer = null;
-    const DEFAULT_IMAGE_DURATION = 5000; // Fotoğraflar için varsayılan 5 saniye
+    const DEFAULT_IMAGE_DURATION = 5000;
 
-    // Firebase Verilerini Dinle
-    db.ref('displayData').on('value', (snapshot) => {
-        const data = snapshot.val();
-        
-        if (!data) {
-            ekraniTemizle();
-            return;
-        }
+    function girisYap() {
+        const girilen = document.getElementById('pinInput').value;
+        const errorElem = document.getElementById('loginError');
 
-        // Ekran Notunu Göster
-        if (data.note && data.note.trim() !== "") {
-            noteBar.innerText = data.note;
-            noteBar.style.display = "block";
+        if (girilen === KORUMA_SIFRESI) {
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('mediaContainer').style.display = 'flex';
+            
+            // Firebase Bağlantısını Başlat
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            
+            tamEkranYap();
+            verileriDinle();
         } else {
-            noteBar.style.display = "none";
+            errorElem.style.display = 'block';
         }
+    }
 
-        // Medyaları Güncelle
-        if (data.images && data.images.length > 0) {
-            currentImages = data.images;
-            currentIndex = 0;
-            emptyMessage.style.display = "none";
-            medyaOynat();
-        } else {
-            if (!data.note || data.note.trim() === "") {
+    function tamEkranYap() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+        }
+    }
+
+    function verileriDinle() {
+        db.ref('displayData').on('value', (snapshot) => {
+            const data = snapshot.val();
+            
+            if (!data) {
                 ekraniTemizle();
-            } else {
-                imgDisplay.style.display = "none";
-                videoDisplay.style.display = "none";
-                emptyMessage.style.display = "none";
+                return;
             }
-        }
-    });
+
+            if (data.note && data.note.trim() !== "") {
+                noteBar.innerText = data.note;
+                noteBar.style.display = "block";
+            } else {
+                noteBar.style.display = "none";
+            }
+
+            if (data.images && data.images.length > 0) {
+                currentImages = data.images;
+                currentIndex = 0;
+                emptyMessage.style.display = "none";
+                medyaOynat();
+            } else {
+                if (!data.note || data.note.trim() === "") {
+                    ekraniTemizle();
+                } else {
+                    imgDisplay.style.display = "none";
+                    videoDisplay.style.display = "none";
+                    emptyMessage.style.display = "none";
+                }
+            }
+        });
+    }
 
     function medyaOynat() {
         if (slideTimer) clearTimeout(slideTimer);
@@ -142,30 +246,33 @@
 
         if (isVideo) {
             imgDisplay.style.display = "none";
-            videoDisplay.src = currentMedia;
             videoDisplay.style.display = "block";
+            
+            videoDisplay.src = currentMedia;
+            videoDisplay.load();
 
-            // Sadece TEK VİDEO seçilmişse döngüye sok (loop)
             if (currentImages.length === 1) {
                 videoDisplay.loop = true;
-                videoDisplay.play().catch(e => console.log("Oynatma hatası:", e));
             } else {
-                // Birden fazla medya varsa video bitince sıradakine geç
                 videoDisplay.loop = false;
-                videoDisplay.play().catch(e => console.log("Oynatma hatası:", e));
-                
                 videoDisplay.onended = () => {
                     sonrakiMedyayaGec();
                 };
             }
+
+            const playPromise = videoDisplay.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    videoDisplay.muted = true;
+                    videoDisplay.play();
+                });
+            }
         } else {
-            // Görsel Oynatma
             videoDisplay.pause();
             videoDisplay.style.display = "none";
             imgDisplay.src = currentMedia;
             imgDisplay.style.display = "block";
 
-            // Birden fazla resim/medya varsa belirlenen süre sonunda sıradakine geç
             if (currentImages.length > 1) {
                 slideTimer = setTimeout(() => {
                     sonrakiMedyayaGec();
